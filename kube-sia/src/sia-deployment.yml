@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sia-deployment
+  namespace: sia
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sia
+    spec:
+      volumes:
+        - name: sia-volume
+          persistentVolumeClaim:
+            claimName: sia-volume-claim
+      containers:
+        - name: sia-docker
+          image: gcr.io/gradientzoo-1233/sia-docker:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9980
+            - containerPort: 9981
+            - containerPort: 9982
+          volumeMounts:
+            - mountPath: "/sia"
+              name: sia-volume
+        - name: sia-docker-backup-periodic
+          image: gcr.io/gradientzoo-1233/sia-docker:latest
+          imagePullPolicy: Always
+          command: ["/root/backup-periodic.sh"]
+          volumeMounts:
+            - mountPath: "/sia"
+              name: sia-volume
+          env:
+            - name: MINIO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: miniourl
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: minioaccesskey
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: miniosecretkey

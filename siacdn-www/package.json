@@ -1,0 +1,25 @@
+{
+  "name": "siacdn-www",
+  "version": "1.0.0",
+  "description": "The user-facing frontend to SiaCDN.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start",
+    "prettier": "./node_modules/.bin/prettier --single-quote --trailing-comma es5 --write \"{pages,lib,components}/**/*.js\""
+  },
+  "author": "Eric Florenzano",
+  "license": "ISC",
+  "dependencies": {
+    "isomorphic-fetch": "^2.2.1",
+    "next": "^3.2.2",
+    "query-string": "^5.0.0",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "semantic-ui-react": "^0.73.1"
+  },
+  "devDependencies": {
+    "prettier": "^1.7.0"
+  }
+}
