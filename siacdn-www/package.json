@@ -14,6 +14,7 @@
   "dependencies": {
     "isomorphic-fetch": "^2.2.1",
     "next": "^3.2.2",
+    "next-cookies": "^1.0.2",
     "query-string": "^5.0.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
