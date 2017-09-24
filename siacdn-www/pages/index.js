@@ -17,6 +17,7 @@ export default () => (
         href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
       />
       <link rel="stylesheet" href="/static/css/global.css" />
+      <script src="https://js.stripe.com/v3/"></script>
     </Head>
     <div className="holder">
       <Segment padded>
