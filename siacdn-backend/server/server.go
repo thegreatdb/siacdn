@@ -41,8 +41,8 @@ func (s *HTTPDServer) Close() error {
 
 func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r := httprouter.New()
+	r.GET("/", s.handleGetIndex)
 	/*
-		r.GET("/", s.handleGetIndex)
 		r.GET("/auth", s.handleGetAuth)
 		r.POST("/auth", s.handleCreateAuthToken)
 		r.POST("/accounts", s.handleCreateAccount)
