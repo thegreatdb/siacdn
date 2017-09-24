@@ -1,10 +1,10 @@
 package cli
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/thegreatdb/siacdn/siacdn-backend/server"
 	urfavecli "github.com/urfave/cli"
 )
 
@@ -18,16 +18,11 @@ func ServeCommand() urfavecli.Command {
 }
 
 func serveCommand(c *urfavecli.Context) error {
-	srv := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "OK")
-	})
-	/*
-		srv, err := server.NewHTTPDServer(db)
-		if err != nil {
-			log.Println("Could not create server: " + err.Error())
-			return err
-		}
-	*/
+	srv, err := server.NewHTTPDServer()
+	if err != nil {
+		log.Println("Could not create server: " + err.Error())
+		return err
+	}
 	log.Println("Running server on port 9095")
 	if err := http.ListenAndServe(":9095", srv); err != nil {
 		log.Println("Error running server")
