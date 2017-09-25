@@ -20,6 +20,12 @@
   version = "v1.2"
 
 [[projects]]
+  name = "github.com/stripe/stripe-go"
+  packages = [".","form","orderitem"]
+  revision = "fd984f4cf0352b66a98d2e7902ee8a71c11d65d1"
+  version = "v27.0.1"
+
+[[projects]]
   name = "github.com/urfave/cli"
   packages = ["."]
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
@@ -34,6 +40,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c09c1d3a61103f8865189a41e818d4d43c4e0f7c88f77483b9c78df796963617"
+  inputs-digest = "e076891faa42a1e536a4056fbcbcd28d5cfcdf03685a131dd3df00722adc1249"
   solver-name = "gps-cdcl"
   solver-version = 1

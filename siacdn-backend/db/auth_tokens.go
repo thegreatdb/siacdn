@@ -6,8 +6,8 @@ import (
 )
 
 func (db *Database) GetAuthToken(id uuid.UUID) (*models.AuthToken, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	if tok, ok := db.AuthTokens[id]; ok {
 		return tok, nil
 	} else {

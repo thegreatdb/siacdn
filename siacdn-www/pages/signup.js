@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Router from 'next/router';
 import cookies from 'next-cookies';
 import {
   Segment,
@@ -14,12 +15,23 @@ import {StripeProvider, Elements, CardElement, injectStripe} from 'react-stripe-
 
 const IS_SERVER = typeof window === 'undefined';
 
-class CheckoutForm extends React.Component {
-  handleSubmit = (ev, err) => {
+class SignupForm extends React.Component {
+  static async getInitialProps(ctx) {
+    const { authTokenID } = cookies(ctx);
+    return { authTokenID };
+  }
+
+  handleSubmit = async (ev, err) => {
     ev.preventDefault();
-    this.props.stripe.createToken({type: 'card', name: 'Jenny Rosen'}).then(({token}) => {
-      console.log('Received Stripe token:', token);
-    });
+    if (this.password1.value != this.password2.value) {
+      alert('Passwords must match')
+      return;
+    }
+    const { token } = await this.props.stripe.createToken({type: 'card', name: 'Jenny Rosen'});
+    const { authTokenID } = this.props;
+    const client = new Client(authTokenID);
+    const account = await client.createAccount(this.username.value, this.password1.value, token)
+    Router.push('/dashboard');
   }
 
   render() {
@@ -27,15 +39,15 @@ class CheckoutForm extends React.Component {
       <Form onSubmit={this.handleSubmit}>
         <Form.Field>
           <label>Username</label>
-          <input placeholder='Username' />
+          <input placeholder='Username' ref={e => (this.username = e)} />
         </Form.Field>
         <Form.Field>
           <label>Password</label>
-          <input type="password" placeholder='Password' />
+          <input type="password" placeholder='Password' ref={e => (this.password1 = e)} />
         </Form.Field>
         <Form.Field>
           <label>Password (Repeat)</label>
-          <input type="password" placeholder='Password (Repeat)' />
+          <input type="password" placeholder='Password (Repeat)' ref={e => (this.password2 = e)} />
         </Form.Field>
         <Form.Field>
           <label>Card details <span className="hint">(this will not initiate a charge)</span></label>
@@ -61,9 +73,9 @@ class CheckoutForm extends React.Component {
 }
 
 if (!IS_SERVER) {
-  const TempCheckoutForm = injectStripe(CheckoutForm);
-  CheckoutForm = () => (
-    <Elements><TempCheckoutForm /></Elements>
+  const TempSignupForm = injectStripe(SignupForm);
+  SignupForm = () => (
+    <Elements><TempSignupForm /></Elements>
   )
 }
 
@@ -80,7 +92,7 @@ const render = () => (
     <div className="holder">
       <Segment padded>
         <Header as="h1">Sign up</Header>
-        <CheckoutForm />
+        <SignupForm />
       </Segment>
     </div>
   </div>

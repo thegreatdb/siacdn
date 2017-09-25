@@ -8,8 +8,8 @@ import (
 )
 
 func (db *Database) GetAccount(id uuid.UUID) (*models.Account, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	if account, ok := db.Accounts[id]; ok {
 		return account, nil
 	} else {
@@ -18,8 +18,8 @@ func (db *Database) GetAccount(id uuid.UUID) (*models.Account, error) {
 }
 
 func (db *Database) GetAccountByUsername(username string) (*models.Account, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	for _, acc := range db.Accounts {
 		if strings.ToLower(acc.Username) == strings.ToLower(username) {
 			return acc, nil

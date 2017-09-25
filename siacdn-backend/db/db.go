@@ -20,7 +20,7 @@ type Database struct {
 	AuthTokens map[uuid.UUID]*models.AuthToken `json:"auth_tokens"`
 
 	filepath string
-	mu       *sync.Mutex
+	mu       *sync.RWMutex
 }
 
 func (db *Database) EnsureDefaults(filepath string) {
@@ -33,7 +33,7 @@ func (db *Database) EnsureDefaults(filepath string) {
 	if filepath != "" && db.filepath != filepath {
 		db.filepath = filepath
 	}
-	db.mu = &sync.Mutex{}
+	db.mu = &sync.RWMutex{}
 }
 
 func (db *Database) Save() error {

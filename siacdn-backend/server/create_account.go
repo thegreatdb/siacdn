@@ -6,13 +6,14 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/stripe/stripe-go"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 )
 
 type createAccountForm struct {
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	StripeToken string `json:"stripe_token"`
+	Username    string        `json:"username"`
+	Password    string        `json:"password"`
+	StripeToken *stripe.Token `json:"stripe_token"`
 }
 
 func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -39,7 +40,7 @@ func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request
 		s.JsonErr(w, "Invalid password (must be at least 5 characters long)")
 		return
 	}
-	if form.StripeToken == "" {
+	if form.StripeToken == nil {
 		s.JsonErr(w, "Must include Stripe token to register")
 		return
 	}
