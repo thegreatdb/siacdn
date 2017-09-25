@@ -1,6 +1,8 @@
 package db
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 )
@@ -13,6 +15,17 @@ func (db *Database) GetAccount(id uuid.UUID) (*models.Account, error) {
 	} else {
 		return nil, ErrNotFound
 	}
+}
+
+func (db *Database) GetAccountByUsername(username string) (*models.Account, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	for _, acc := range db.Accounts {
+		if strings.ToLower(acc.Username) == strings.ToLower(username) {
+			return acc, nil
+		}
+	}
+	return nil, ErrNotFound
 }
 
 func (db *Database) SaveAccount(acc *models.Account) error {

@@ -44,12 +44,9 @@ func (s *HTTPDServer) Close() error {
 func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r := httprouter.New()
 	r.GET("/", s.handleGetIndex)
-	/*
-		r.GET("/auth", s.handleGetAuth)
-		r.POST("/auth", s.handleCreateAuthToken)
-		r.POST("/accounts", s.handleCreateAccount)
-		r.GET("/accounts/id/:id", s.handleGetAccount)
-	*/
+	r.GET("/auth", s.handleGetAuth)
+	r.POST("/accounts", s.handleCreateAccount)
+	r.POST("/auth", s.handleCreateAuthToken)
 	r.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.JsonErr(w, "Not found")
 	})

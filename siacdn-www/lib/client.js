@@ -31,27 +31,13 @@ export default class Client {
     return this.authAccount;
   }
 
-  createAccount(email, password) {
-    return this._reg('/accounts', email, password);
+  createAccount(username, password, stripeToken) {
+    return this._reg('/accounts', username, password, stripeToken);
   }
 
-  loginAccount(email, password) {
-    return this._reg('/auth', email, password);
+  loginAccount(username, password) {
+    return this._reg('/auth', username, password);
   }
-
-  /*
-  async uploadFile(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const resp = await this.post('/files', null, formData);
-    return resp.file;
-  }
-
-  async getFile(id) {
-    const resp = await this.get('/files/id/' + id, null);
-    return resp.file;
-  }
-  */
 
   // Supporting and utility functions follow
 
@@ -82,8 +68,12 @@ export default class Client {
     return fetchJSON(url, opts);
   }
 
-  async _reg(path, email, password) {
-    const body = JSON.stringify({ email, password });
+  async _reg(path, username, password, stripeToken) {
+    let dat = { username, password };
+    if (stripeToken) {
+      dat['stripe_token'] = stripeToken;
+    }
+    const body = JSON.stringify(dat);
     const resp = await this.post(path, null, body);
     if (!resp.auth_token || !resp.auth_token.id) {
       throw new Error('Got no token id in response: ' + JSON.stringify(resp));

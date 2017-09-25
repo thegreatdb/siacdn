@@ -8,18 +8,18 @@ import (
 
 type AuthToken struct {
 	ID          uuid.UUID `json:"id"`
-	UserID      uuid.UUID `json:"user_id"`
+	AccountID   uuid.UUID `json:"account_id"`
 	CreatedTime time.Time `json:"created_time"`
 }
 
-func NewAuthToken(userID uuid.UUID) (*AuthToken, error) {
+func NewAuthToken(accountID uuid.UUID) (*AuthToken, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
 	return &AuthToken{
 		ID:          id,
-		UserID:      userID,
+		AccountID:   accountID,
 		CreatedTime: time.Now().UTC(),
 	}, nil
 }
