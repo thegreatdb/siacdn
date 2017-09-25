@@ -9,16 +9,18 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
+	"github.com/thegreatdb/siacdn/siacdn-backend/db"
 )
 
 var ErrNotImplemented error = errors.New("Endpoint has not yet been implemented")
 
 type HTTPDServer struct {
 	mux http.Handler
+	db  *db.Database
 }
 
-func NewHTTPDServer() (*HTTPDServer, error) {
-	s := &HTTPDServer{}
+func NewHTTPDServer(db *db.Database) (*HTTPDServer, error) {
+	s := &HTTPDServer{db: db}
 
 	router := s.makeRouter()
 	s.mux = cors.New(cors.Options{

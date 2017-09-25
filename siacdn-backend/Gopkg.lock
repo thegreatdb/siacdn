@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
+
+[[projects]]
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
   revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
@@ -19,9 +25,15 @@
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
   version = "v1.20.0"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["bcrypt","blowfish"]
+  revision = "847319b7fc94cab682988f93da778204da164588"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d72863b77303efdaf8d94b548aba0b961ee7cb667e7f07ba0a00c10f86a06b52"
+  inputs-digest = "c09c1d3a61103f8865189a41e818d4d43c4e0f7c88f77483b9c78df796963617"
   solver-name = "gps-cdcl"
   solver-version = 1
