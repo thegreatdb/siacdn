@@ -72,12 +72,9 @@ export default class NewSia extends React.Component {
     await this.setState({ siaError: null, siaSubmitting: true });
     try {
       const client = new Client(authTokenID);
-      console.log('creating sia node');
       const siaNode = await client.createSiaNode(siaCostOptions[selectedCost].key);
-      console.log('created sia node', siaNode);
       await this.setState({ siaSubmitting: false, siaNode: siaNode });
     } catch (error) {
-      console.log('errored creating sia node', error);
       await this.setState({ siaError: error, siaSubmitting: false });
     }
   };
