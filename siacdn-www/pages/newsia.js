@@ -19,22 +19,17 @@ import redirect from '../lib/redirect';
 import Client from '../lib/client';
 
 const siaCostOptions = [
-  { key: 1, text: '5TB  ($6/mo)', value: 1 },
-  { key: 2, text: '10TB ($12/mo)', value: 2 },
-  { key: 3, text: '15TB ($18/mo)', value: 3 },
-  { key: 4, text: '20TB ($24/mo)', value: 4 },
-  { key: 5, text: '25TB ($30/mo)', value: 5 },
-  { key: 6, text: '30TB ($36/mo)', value: 6 },
-  { key: 7, text: '35TB ($42/mo)', value: 7 },
-  { key: 8, text: '40TB ($48/mo)', value: 8 },
-  { key: 9, text: '45TB ($54/mo)', value: 9 },
-  { key: 10, text: '50TB ($60/mo)', value: 10 },
+  { key: 1, text: '5TB  ($16/mo)', value: 1 },
+  { key: 2, text: '10TB ($22/mo)', value: 2 },
+  { key: 3, text: '15TB ($28/mo)', value: 3 },
+  { key: 4, text: '20TB ($34/mo)', value: 4 },
+  { key: 5, text: '25TB ($40/mo)', value: 5 },
+  { key: 6, text: '30TB ($46/mo)', value: 6 },
+  { key: 7, text: '35TB ($52/mo)', value: 7 },
+  { key: 8, text: '40TB ($58/mo)', value: 8 },
+  { key: 9, text: '45TB ($64/mo)', value: 9 },
+  { key: 10, text: '50TB ($70/mo)', value: 10 },
 ];
-
-let textByKey = {};
-siaCostOptions.forEach(opt => {
-  textByKey[opt.key] = opt.text;
-});
 
 export default class NewSia extends React.Component {
   state = {
