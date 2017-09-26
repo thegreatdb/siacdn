@@ -4,12 +4,26 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/customer"
 	"github.com/thegreatdb/siacdn/siacdn-backend/db"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 )
+
+var stripeSecretKey string
+
+func getStripeSecretKey() string {
+	if stripeSecretKey == "" {
+		stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
+	}
+	if stripeSecretKey == "" {
+		stripeSecretKey = "sk_test_cfNIKOMGfV4gI9KxzPxv4oba" // Testnet secret key
+	}
+	return stripeSecretKey
+}
 
 type createAccountForm struct {
 	Email       string        `json:"email"`
@@ -61,10 +75,19 @@ func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// TODO: Stripe validation
-	// TODO: Add Stripe card or customer id to model and add it here
+	stripe.Key = getStripeSecretKey()
+	customerParams := &stripe.CustomerParams{
+		Desc:  "Customer for " + form.Email,
+		Email: form.Email,
+	}
+	customerParams.SetSource(form.StripeToken.ID)
+	cust, err := customer.New(customerParams)
+	if err != nil {
+		s.JsonErr(w, "Could not create Stripe customer: "+err.Error())
+		return
+	}
 
-	acc, err := models.NewAccount(form.Email, form.Password, form.Name)
+	acc, err := models.NewAccount(form.Email, form.Password, form.Name, cust.ID)
 	if err != nil {
 		s.JsonErr(w, "Could not create new account: "+err.Error())
 		return
