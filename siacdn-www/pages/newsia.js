@@ -2,7 +2,18 @@ import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import cookies from 'next-cookies';
-import { Segment, Grid, Item, Header, Button, List, Step, Form, Menu, Dropdown } from 'semantic-ui-react';
+import {
+  Segment,
+  Grid,
+  Item,
+  Header,
+  Button,
+  List,
+  Step,
+  Form,
+  Menu,
+  Dropdown,
+} from 'semantic-ui-react';
 import Nav from '../components/nav';
 import redirect from '../lib/redirect';
 import Client from '../lib/client';
@@ -28,10 +39,10 @@ siaCostOptions.forEach(opt => {
 export default class NewSia extends React.Component {
   state = {
     stage: 'sia',
-    selectedCost: 1
+    selectedCost: 1,
   };
 
-  async getInitialProps(ctx) {
+  static async getInitialProps(ctx) {
     const { authTokenID } = cookies(ctx);
     const client = new Client(authTokenID);
     let authAccount = null;
@@ -47,7 +58,7 @@ export default class NewSia extends React.Component {
   }
 
   async handleSiaCapacityChange(ev, data) {
-    await this.setState({selectedCost: data.value});
+    await this.setState({ selectedCost: data.value });
   }
 
   render() {
@@ -66,21 +77,40 @@ export default class NewSia extends React.Component {
         <div className="holder">
           <Nav activeItem="newsia" authAccount={authAccount} />
           <Segment padded>
-            {stage === 'sia' ?
-              <Header as="h1">Let&rsquo;s start a new Sia full node</Header> :
-              <Header as="h1">Now let&rsquo;s start some Minio instances</Header>}
+            {stage === 'sia' ? (
+              <Header as="h1">Let&rsquo;s start a new Sia full node</Header>
+            ) : (
+              <Header as="h1">
+                Now let&rsquo;s start some Minio instances
+              </Header>
+            )}
           </Segment>
           <Step.Group ordered fluid size="small">
-            <Step completed title='Sign up' description='Sign up for an account' />
-            <Step completed={stage !== 'sia'} title='Sia Node' description='Configure Sia node' />
-            <Step title='Minio Instances' description='Set up Minio instances' />
+            <Step
+              completed
+              title="Sign up"
+              description="Sign up for an account"
+            />
+            <Step
+              completed={stage !== 'sia'}
+              title="Sia Node"
+              description="Configure Sia node"
+            />
+            <Step
+              title="Minio Instances"
+              description="Set up Minio instances"
+            />
           </Step.Group>
           <Segment padded>
             <Header as="h3">Sia Node</Header>
             <Form>
               <Form.Field>
                 <label>Sia node capacity</label>
-                <Form.Select options={siaCostOptions} onChange={this.handleSiaCapacityChange.bind(this)} placeholder="Sia node capacity" />
+                <Form.Select
+                  options={siaCostOptions}
+                  onChange={this.handleSiaCapacityChange.bind(this)}
+                  placeholder="Sia node capacity"
+                />
               </Form.Field>
               <Button>Start Sia node</Button>
             </Form>
