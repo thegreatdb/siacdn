@@ -44,6 +44,10 @@ func (s *HTTPDServer) handleCreateAuthToken(w http.ResponseWriter, r *http.Reque
 		s.JsonErr(w, "Could not get account with that username: "+err.Error())
 		return
 	}
+	if err = acc.CheckPassword(form.Password); err != nil {
+		s.JsonErr(w, "Password did not match: "+err.Error())
+		return
+	}
 
 	authToken, err := models.NewAuthToken(acc.ID)
 	if err != nil {
