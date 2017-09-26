@@ -2,12 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import {
-  Segment,
-  Header,
-  Button,
-  Form,
-} from 'semantic-ui-react';
+import { Segment, Header, Button, Form } from 'semantic-ui-react';
 import Client from '../lib/client';
 import Nav from '../components/nav';
 
@@ -19,7 +14,7 @@ export default class LoginForm extends React.Component {
     return { authTokenID };
   }
 
-  handleSubmit = async (ev) => {
+  handleSubmit = async ev => {
     ev.preventDefault();
     const username = this.username.value;
     const password = this.password.value;
@@ -35,7 +30,7 @@ export default class LoginForm extends React.Component {
     } catch (error) {
       await this.setState({ error, submitting: false });
     }
-  }
+  };
 
   render() {
     return (
@@ -46,7 +41,7 @@ export default class LoginForm extends React.Component {
             href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
           />
           <link rel="stylesheet" href="/static/css/global.css" />
-          <script src="https://js.stripe.com/v3/"></script>
+          <script src="https://js.stripe.com/v3/" />
         </Head>
         <div className="holder">
           <Nav activeItem="login" authAccount={null} />
@@ -55,17 +50,21 @@ export default class LoginForm extends React.Component {
             <Form onSubmit={this.handleSubmit}>
               <Form.Field>
                 <label>Username</label>
-                <input placeholder='Username' ref={e => (this.username = e)} />
+                <input placeholder="Username" ref={e => (this.username = e)} />
               </Form.Field>
               <Form.Field>
                 <label>Password</label>
-                <input type="password" placeholder='Password' ref={e => (this.password = e)} />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  ref={e => (this.password = e)}
+                />
               </Form.Field>
-              <Button type='submit'>Log in</Button>
+              <Button type="submit">Log in</Button>
             </Form>
           </Segment>
         </div>
       </div>
-    )
+    );
   }
 }

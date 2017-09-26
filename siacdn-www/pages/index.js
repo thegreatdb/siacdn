@@ -1,16 +1,11 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import {
-  Segment,
-  Grid,
-  Item,
-  Header,
-  Button,
-  List,
-} from 'semantic-ui-react';
+import cookies from 'next-cookies';
+import { Segment, Grid, Item, Header, Button, List } from 'semantic-ui-react';
 import Nav from '../components/nav';
+import Client from '../lib/client';
 
-export default () => (
+const Index = ({ authAccount }) => (
   <div>
     <Head>
       <link
@@ -18,10 +13,10 @@ export default () => (
         href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
       />
       <link rel="stylesheet" href="/static/css/global.css" />
-      <script src="https://js.stripe.com/v3/"></script>
+      <script src="https://js.stripe.com/v3/" />
     </Head>
     <div className="holder">
-      <Nav activeItem="index" authAccount={null} />
+      <Nav activeItem="index" authAccount={authAccount} />
       <Segment padded>
         <Header as="h1">SiaCDN</Header>
         <p>
@@ -87,3 +82,16 @@ export default () => (
     </div>
   </div>
 );
+
+Index.getInitialProps = async ctx => {
+  const { authTokenID } = cookies(ctx);
+  const client = new Client(authTokenID);
+  let authAccount = null;
+  try {
+    authAccount = await client.getAuthAccount();
+  } catch (err) {
+  }
+  return { authAccount };
+};
+
+export default Index;

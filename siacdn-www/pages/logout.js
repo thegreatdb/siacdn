@@ -18,8 +18,6 @@ export default class Logout extends React.Component {
   }
 
   render() {
-    return (
-      <Message header="Please wait..." content="Logging you out now." />
-    );
+    return <Message header="Please wait..." content="Logging you out now." />;
   }
 }

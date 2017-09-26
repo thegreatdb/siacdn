@@ -1,12 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import cookies from 'next-cookies';
-import {
-  Segment,
-  Header,
-  Button,
-  List,
-} from 'semantic-ui-react';
+import { Segment, Header, Button, List } from 'semantic-ui-react';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import Nav from '../components/nav';
@@ -19,7 +14,7 @@ const Dashboard = ({ authAccount }) => (
         href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
       />
       <link rel="stylesheet" href="/static/css/global.css" />
-      <script src="https://js.stripe.com/v3/"></script>
+      <script src="https://js.stripe.com/v3/" />
     </Head>
     <div className="holder">
       <Nav activeItem="dashboard" authAccount={authAccount} />
