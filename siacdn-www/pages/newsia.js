@@ -19,16 +19,16 @@ import redirect from '../lib/redirect';
 import Client from '../lib/client';
 
 const siaCostOptions = [
-  { key: 5, text: '5TB  ($16/mo)', value: '5' },
-  { key: 10, text: '10TB ($22/mo)', value: '10' },
-  { key: 15, text: '15TB ($28/mo)', value: '15' },
-  { key: 20, text: '20TB ($34/mo)', value: '20' },
-  { key: 25, text: '25TB ($40/mo)', value: '25' },
-  { key: 30, text: '30TB ($46/mo)', value: '30' },
-  { key: 35, text: '35TB ($52/mo)', value: '35' },
-  { key: 40, text: '40TB ($58/mo)', value: '40' },
-  { key: 45, text: '45TB ($64/mo)', value: '45' },
-  { key: 50, text: '50TB ($70/mo)', value: '50' }
+  { key: 5,  text: ' 5TB - $6/mo', value: '5' },
+  { key: 10, text: '10TB - $12/mo', value: '10' },
+  { key: 15, text: '15TB - $18/mo', value: '15' },
+  { key: 20, text: '20TB - $24/mo', value: '20' },
+  { key: 25, text: '25TB - $30/mo', value: '25' },
+  { key: 30, text: '30TB - $36/mo', value: '30' },
+  { key: 35, text: '35TB - $42/mo', value: '35' },
+  { key: 40, text: '40TB - $48/mo', value: '40' },
+  { key: 45, text: '45TB - $54/mo', value: '45' },
+  { key: 50, text: '50TB - $60/mo', value: '50' }
 ];
 
 export default class NewSia extends React.Component {
@@ -99,6 +99,10 @@ export default class NewSia extends React.Component {
           <Segment padded>
             <Header as="h3">Sia Node</Header>
             <Form>
+              <Form.Field>
+                <label>Node base monthly price</label>
+                $10
+              </Form.Field>
               <Form.Field>
                 <label>Sia node capacity</label>
                 <Form.Select
