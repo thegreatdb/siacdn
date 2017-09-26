@@ -19,22 +19,22 @@ import redirect from '../lib/redirect';
 import Client from '../lib/client';
 
 const siaCostOptions = [
-  { key: 1, text: '5TB  ($16/mo)', value: 1 },
-  { key: 2, text: '10TB ($22/mo)', value: 2 },
-  { key: 3, text: '15TB ($28/mo)', value: 3 },
-  { key: 4, text: '20TB ($34/mo)', value: 4 },
-  { key: 5, text: '25TB ($40/mo)', value: 5 },
-  { key: 6, text: '30TB ($46/mo)', value: 6 },
-  { key: 7, text: '35TB ($52/mo)', value: 7 },
-  { key: 8, text: '40TB ($58/mo)', value: 8 },
-  { key: 9, text: '45TB ($64/mo)', value: 9 },
-  { key: 10, text: '50TB ($70/mo)', value: 10 },
+  { key: 5, text: '5TB  ($16/mo)', value: '5' },
+  { key: 10, text: '10TB ($22/mo)', value: '10' },
+  { key: 15, text: '15TB ($28/mo)', value: '15' },
+  { key: 20, text: '20TB ($34/mo)', value: '20' },
+  { key: 25, text: '25TB ($40/mo)', value: '25' },
+  { key: 30, text: '30TB ($46/mo)', value: '30' },
+  { key: 35, text: '35TB ($52/mo)', value: '35' },
+  { key: 40, text: '40TB ($58/mo)', value: '40' },
+  { key: 45, text: '45TB ($64/mo)', value: '45' },
+  { key: 50, text: '50TB ($70/mo)', value: '50' },
 ];
 
 export default class NewSia extends React.Component {
   state = {
     stage: 'sia',
-    selectedCost: 1,
+    selectedCost: -1,
   };
 
   static async getInitialProps(ctx) {

@@ -60,7 +60,7 @@ const Index = ({ authAccount }) => (
               $1.20/TB
             </a>
           </strong>{' '}
-          for Sia network storage and{' '}
+          for Sia network storage capacity and{' '}
           <strong>
             <a
               href="https://cloud.google.com/compute/pricing#internet_egress"
