@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/stripe/stripe-go"
+	"github.com/thegreatdb/siacdn/siacdn-backend/db"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 )
 
@@ -46,16 +47,30 @@ func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Check if the account exists already
+	_, err = s.db.GetAccountByEmail(form.Email)
+	if err == nil {
+		s.JsonErr(w, "Account with that e-mail address already exists")
+		return
+	} else {
+		if err == db.ErrNotFound {
+			// This was the expected path
+		} else {
+			s.JsonErr(w, "Could not validate account uniqueness: "+err.Error())
+			return
+		}
+	}
+
 	// TODO: Stripe validation
 	// TODO: Add Stripe card or customer id to model and add it here
 
 	acc, err := models.NewAccount(form.Email, form.Password, form.Name)
 	if err != nil {
-		s.JsonErr(w, "Could not create new account"+err.Error())
+		s.JsonErr(w, "Could not create new account: "+err.Error())
 		return
 	}
 	if err = s.db.SaveAccount(acc); err != nil {
-		s.JsonErr(w, "Could not save created account"+err.Error())
+		s.JsonErr(w, "Could not save created account: "+err.Error())
 		return
 	}
 
@@ -65,7 +80,7 @@ func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if err = s.db.SaveAuthToken(authToken); err != nil {
-		s.JsonErr(w, "Could not save created auth token"+err.Error())
+		s.JsonErr(w, "Could not save created auth token: "+err.Error())
 		return
 	}
 

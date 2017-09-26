@@ -45,7 +45,7 @@ func (s *HTTPDServer) handleCreateAuthToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if err = acc.CheckPassword(form.Password); err != nil {
-		s.JsonErr(w, "Password did not match: "+err.Error())
+		s.JsonErr(w, "Password did not match")
 		return
 	}
 
@@ -55,7 +55,7 @@ func (s *HTTPDServer) handleCreateAuthToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if err = s.db.SaveAuthToken(authToken); err != nil {
-		s.JsonErr(w, "Could not save created auth token"+err.Error())
+		s.JsonErr(w, "Could not save created auth token: "+err.Error())
 		return
 	}
 

@@ -2,7 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import { Segment, Header, Button, Form } from 'semantic-ui-react';
+import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import Nav from '../components/nav';
 
@@ -33,6 +33,8 @@ export default class LoginForm extends React.Component {
   };
 
   render() {
+    const { submitting, error } = this.state;
+    const hasError = Boolean(error);
     return (
       <div>
         <Head>
@@ -47,7 +49,8 @@ export default class LoginForm extends React.Component {
           <Nav activeItem="login" authAccount={null} />
           <Segment padded>
             <Header as="h1">Log in</Header>
-            <Form onSubmit={this.handleSubmit}>
+            <Form error={hasError} loading={submitting} onSubmit={this.handleSubmit}>
+              {hasError ? <Message header="Whoops!" content={hasError ? '' + error.message : null} error /> : null}
               <Form.Field>
                 <label>E-Mail</label>
                 <input placeholder="E-Mail" ref={e => (this.email = e)} />

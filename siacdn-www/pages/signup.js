@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import { Segment, Header, Button, Form } from 'semantic-ui-react';
+import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import {
@@ -17,6 +17,8 @@ import Nav from '../components/nav';
 const IS_SERVER = typeof window === 'undefined';
 
 class SignupForm extends React.Component {
+  state = { error: null, submitting: false};
+
   static async getInitialProps(ctx) {
     const { authTokenID } = cookies(ctx);
     return { authTokenID };
@@ -25,27 +27,39 @@ class SignupForm extends React.Component {
   handleSubmit = async (ev, err) => {
     ev.preventDefault();
     if (this.password1.value != this.password2.value) {
-      alert('Passwords must match');
+      await this.setState({error: {message: 'Passwords must match'}});
       return;
     }
-    const { token } = await this.props.stripe.createToken({
-      type: 'card',
-      name: this.name.value,
-    });
-    const { authTokenID } = this.props;
-    const client = new Client(authTokenID);
-    const account = await client.createAccount(
-      this.email.value,
-      this.password1.value,
-      this.name.value,
-      token
-    );
-    Router.push('/dashboard');
+    await this.setState({ error: null, submitting: true });
+    try {
+      const { token } = await this.props.stripe.createToken({
+        type: 'card',
+        name: this.name.value,
+      });
+      const { authTokenID } = this.props;
+      const client = new Client(authTokenID);
+      const account = await client.createAccount(
+        this.email.value,
+        this.password1.value,
+        this.name.value,
+        token
+      );
+      // TODO: Use the account for something here?
+      await Router.push('/dashboard');
+      // Updating state directly because component is unmounted
+      this.state['authAccount'] = account;
+      this.state['submitting'] = false;
+    } catch (error) {
+      await this.setState({ error, submitting: false });
+    }
   };
 
   render() {
+    const { submitting, error } = this.state;
+    const hasError = Boolean(error);
     return (
-      <Form onSubmit={this.handleSubmit}>
+      <Form error={hasError} loading={submitting} onSubmit={this.handleSubmit}>
+        {hasError ? <Message header="Whoops!" content={hasError ? '' + error.message : null} error /> : null}
         <Form.Field>
           <label>E-Mail</label>
           <input placeholder="E-Mail" type="email" ref={e => (this.email = e)} />
