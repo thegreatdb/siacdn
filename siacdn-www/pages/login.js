@@ -16,13 +16,13 @@ export default class LoginForm extends React.Component {
 
   handleSubmit = async ev => {
     ev.preventDefault();
-    const username = this.username.value;
+    const email = this.email.value;
     const password = this.password.value;
     await this.setState({ error: null, submitting: true });
     const { authTokenID } = this.props;
     const client = new Client(authTokenID);
     try {
-      const account = await client.loginAccount(username, password);
+      const account = await client.loginAccount(email, password);
       await Router.push('/dashboard');
       // Updating state directly because component is unmounted
       this.state['authAccount'] = account;
@@ -49,8 +49,8 @@ export default class LoginForm extends React.Component {
             <Header as="h1">Log in</Header>
             <Form onSubmit={this.handleSubmit}>
               <Form.Field>
-                <label>Username</label>
-                <input placeholder="Username" ref={e => (this.username = e)} />
+                <label>E-Mail</label>
+                <input placeholder="E-Mail" ref={e => (this.email = e)} />
               </Form.Field>
               <Form.Field>
                 <label>Password</label>

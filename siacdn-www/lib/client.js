@@ -31,12 +31,12 @@ export default class Client {
     return this.authAccount;
   }
 
-  createAccount(username, password, name, stripeToken) {
-    return this._reg('/accounts', username, password, name, stripeToken);
+  createAccount(email, password, name, stripeToken) {
+    return this._reg('/accounts', email, password, name, stripeToken);
   }
 
-  loginAccount(username, password) {
-    return this._reg('/auth', username, password);
+  loginAccount(email, password) {
+    return this._reg('/auth', email, password);
   }
 
   // Supporting and utility functions follow
@@ -68,8 +68,8 @@ export default class Client {
     return fetchJSON(url, opts);
   }
 
-  async _reg(path, username, password, name, stripeToken) {
-    let dat = { username, password };
+  async _reg(path, email, password, name, stripeToken) {
+    let dat = { email, password };
     if (name) {
       dat['name'] = name;
     }

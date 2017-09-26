@@ -10,7 +10,7 @@ import (
 )
 
 type createAuthTokenForm struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -30,8 +30,8 @@ func (s *HTTPDServer) handleCreateAuthToken(w http.ResponseWriter, r *http.Reque
 		s.JsonErr(w, "Could not decode JSON: "+err.Error())
 		return
 	}
-	if form.Username == "" || len(form.Username) < 4 {
-		s.JsonErr(w, "Invalid username (must be at least 3 characters long)")
+	if form.Email == "" || len(form.Email) < 6 {
+		s.JsonErr(w, "Invalid email (must be at least 5 characters long)")
 		return
 	}
 	if form.Password == "" || len(form.Password) < 6 {
@@ -39,9 +39,9 @@ func (s *HTTPDServer) handleCreateAuthToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	acc, err := s.db.GetAccountByUsername(form.Username)
+	acc, err := s.db.GetAccountByEmail(form.Email)
 	if err != nil {
-		s.JsonErr(w, "Could not get account with that username: "+err.Error())
+		s.JsonErr(w, "Could not get account with that email: "+err.Error())
 		return
 	}
 	if err = acc.CheckPassword(form.Password); err != nil {

@@ -19,7 +19,7 @@ const Nav = ({ activeItem, authAccount }) => (
 
     {activeItem === 'logout' ? null : (
       <Menu.Menu position="right">
-        {authAccount ? <Menu.Item>{authAccount.username}</Menu.Item> : null}
+        {authAccount ? <Menu.Item>{authAccount.name}</Menu.Item> : null}
         {authAccount ? (
           <Menu.Item>
             <Button

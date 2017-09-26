@@ -35,7 +35,7 @@ class SignupForm extends React.Component {
     const { authTokenID } = this.props;
     const client = new Client(authTokenID);
     const account = await client.createAccount(
-      this.username.value,
+      this.email.value,
       this.password1.value,
       this.name.value,
       token
@@ -47,8 +47,8 @@ class SignupForm extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit}>
         <Form.Field>
-          <label>Username</label>
-          <input placeholder="Username" ref={e => (this.username = e)} />
+          <label>E-Mail</label>
+          <input placeholder="E-Mail" type="email" ref={e => (this.email = e)} />
         </Form.Field>
         <Form.Field>
           <label>Password</label>

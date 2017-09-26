@@ -17,11 +17,11 @@ func (db *Database) GetAccount(id uuid.UUID) (*models.Account, error) {
 	}
 }
 
-func (db *Database) GetAccountByUsername(username string) (*models.Account, error) {
+func (db *Database) GetAccountByEmail(email string) (*models.Account, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	for _, acc := range db.Accounts {
-		if strings.ToLower(acc.Username) == strings.ToLower(username) {
+		if strings.ToLower(acc.Email) == strings.ToLower(email) {
 			return acc, nil
 		}
 	}

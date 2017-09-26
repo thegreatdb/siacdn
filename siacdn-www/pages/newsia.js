@@ -28,13 +28,13 @@ const siaCostOptions = [
   { key: 35, text: '35TB ($52/mo)', value: '35' },
   { key: 40, text: '40TB ($58/mo)', value: '40' },
   { key: 45, text: '45TB ($64/mo)', value: '45' },
-  { key: 50, text: '50TB ($70/mo)', value: '50' },
+  { key: 50, text: '50TB ($70/mo)', value: '50' }
 ];
 
 export default class NewSia extends React.Component {
   state = {
     stage: 'sia',
-    selectedCost: -1,
+    selectedCost: 1,
   };
 
   static async getInitialProps(ctx) {

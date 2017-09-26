@@ -11,7 +11,7 @@ import (
 )
 
 type createAccountForm struct {
-	Username    string        `json:"username"`
+	Email       string        `json:"email"`
 	Password    string        `json:"password"`
 	Name        string        `json:"name"`
 	StripeToken *stripe.Token `json:"stripe_token"`
@@ -33,8 +33,8 @@ func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request
 		s.JsonErr(w, "Could not decode JSON: "+err.Error())
 		return
 	}
-	if form.Username == "" || len(form.Username) < 4 {
-		s.JsonErr(w, "Invalid username (must be at least 3 characters long)")
+	if form.Email == "" || len(form.Email) < 6 {
+		s.JsonErr(w, "Invalid email (must be at least 5 characters long)")
 		return
 	}
 	if form.Password == "" || len(form.Password) < 6 {
@@ -49,7 +49,7 @@ func (s *HTTPDServer) handleCreateAccount(w http.ResponseWriter, r *http.Request
 	// TODO: Stripe validation
 	// TODO: Add Stripe card or customer id to model and add it here
 
-	acc, err := models.NewAccount(form.Username, form.Password, form.Name)
+	acc, err := models.NewAccount(form.Email, form.Password, form.Name)
 	if err != nil {
 		s.JsonErr(w, "Could not create new account"+err.Error())
 		return

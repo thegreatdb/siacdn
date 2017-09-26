@@ -11,20 +11,20 @@ const BCRYPT_COST = 10
 
 type Account struct {
 	ID           uuid.UUID `json:"id"`
-	Username     string    `json:"username"`
+	Email        string    `json:"email"`
 	PasswordHash string    `json:"password_hash"`
 	Name         string    `json:"name"`
 	CreatedTime  time.Time `json:"created_time"`
 }
 
-func NewAccount(username, password, name string) (*Account, error) {
+func NewAccount(email, password, name string) (*Account, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
 	acc := &Account{
 		ID:          id,
-		Username:    username,
+		Email:       email,
 		Name:        name,
 		CreatedTime: time.Now().UTC(),
 	}
