@@ -3,12 +3,13 @@ import Link from 'next/link';
 import cookies from 'next-cookies';
 import {
   Segment,
-  Grid,
+  Step,
   Item,
   Header,
   Button,
   List,
   Message,
+  Icon,
 } from 'semantic-ui-react';
 import Nav from '../components/nav';
 import Client from '../lib/client';
@@ -31,7 +32,7 @@ const Index = ({ authAccount }) => (
           the cloud.
           <Header.Subheader>
             We host a Sia full node for you, along with a specialized version of
-            Minio that provides an S3-compatible API to use Sia.
+            Minio that provides an S3-compatible API into your Sia node.
           </Header.Subheader>
         </Header>
 
@@ -75,55 +76,38 @@ const Index = ({ authAccount }) => (
           network itself (once it has a few more features.)
         </p>
         <Message info>
-          Note that you cannot buy virtual currency of any kind from us - you
-          are paying for our internet hosting service, and we use the Sia
+          Note that{' '}
+          <strong>
+            you cannot buy virtual currency of any kind from us.
+          </strong>{' '}
+          You are paying for our internet hosting service, and we use the Sia
           network to provide that service to you.
         </Message>
 
         <Header as="h2">Steps</Header>
-        <Grid columns={3} divided>
-          <Grid.Row>
-            <Grid.Column>
-              <Item.Group divided>
-                <Item>
-                  <Item.Image
-                    size="tiny"
-                    src="https://react.semantic-ui.com/assets/images/wireframe/image.png"
-                  />
-                  <Item.Content verticalAlign="middle">
-                    Start a Sia full node in the cloud
-                  </Item.Content>
-                </Item>
-              </Item.Group>
-            </Grid.Column>
-            <Grid.Column>
-              <Item.Group divided>
-                <Item>
-                  <Item.Image
-                    size="tiny"
-                    src="https://react.semantic-ui.com/assets/images/wireframe/image.png"
-                  />
-                  <Item.Content verticalAlign="middle">
-                    Choose your scaling options
-                  </Item.Content>
-                </Item>
-              </Item.Group>
-            </Grid.Column>
-            <Grid.Column>
-              <Item.Group divided>
-                <Item>
-                  <Item.Image
-                    size="tiny"
-                    src="https://react.semantic-ui.com/assets/images/wireframe/image.png"
-                  />
-                  <Item.Content verticalAlign="middle">
-                    Connect to S3-compatible Minio frontend
-                  </Item.Content>
-                </Item>
-              </Item.Group>
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
+        <Step.Group size="small">
+          <Step>
+            <Icon name="mouse pointer" />
+            <Step.Content
+              title="Sign up"
+              description="Register for an account"
+            />
+          </Step>
+          <Step>
+            <Icon name="line chart" />
+            <Step.Content
+              title="Scale up"
+              description="Start Sia & Minio nodes"
+            />
+          </Step>
+          <Step>
+            <Icon name="birthday" />
+            <Step.Content
+              title="Enjoy"
+              description="Visit dashboard & use S3 tools"
+            />
+          </Step>
+        </Step.Group>
 
         <Header as="h2">Let&rsquo;s get going</Header>
         <Link href="/dashboard">

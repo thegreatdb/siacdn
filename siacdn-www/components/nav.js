@@ -24,6 +24,7 @@ const Nav = ({ activeItem, authAccount }) => (
           <Menu.Item>
             <Button
               onClick={clickRouter('/newsia')}
+              basic
               primary
               disabled={activeItem === 'newsia'}
             >
