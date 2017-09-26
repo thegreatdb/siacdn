@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd /tmp
+git clone https://github.com/coreos/prometheus-operator.git
+cd prometheus-operator/contrib/kube-prometheus
+
+hack/cluster-monitoring/deploy
+
+rm -Rf /tmp/prometheus-operator

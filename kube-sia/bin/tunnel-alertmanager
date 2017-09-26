@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -e
+
+kubectl --namespace=monitoring port-forward alertmanager-main-0 9093

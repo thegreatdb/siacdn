@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -e
+
+kubectl --namespace=monitoring port-forward prometheus-k8s-0 9090
