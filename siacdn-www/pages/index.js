@@ -40,12 +40,23 @@ const Index = ({ authAccount }) => (
           <Message.Header>
             If you&rsquo;re interested in supporting distributed systems...
           </Message.Header>
-          Increasing overall network usage is the real best way to show your
-          support. We believe that if it&rsquo;s easy to get started with Sia —
-          if, within an hour of hearing about it, a developer who has used
-          Amazon Web Services can use it, then overall network usage will
-          skyrocket. We believe SiaCDN achieves this, and we hope you support us
-          in supporting the Sia network.
+          <Message.Content>
+            <p>
+              Increasing overall network usage is the real best way to show your
+              support. We believe that if it&rsquo;s easy to get started with
+              Sia — if, within an hour of hearing about it, a developer who has
+              used Amazon Web Services can use it, then overall network usage
+              will skyrocket. We believe SiaCDN achieves this, and we hope you
+              support us in supporting the Sia network.
+            </p>
+            <p>
+              <Link href="/dashboard">
+                <Button basic color="green">
+                  Get started
+                </Button>
+              </Link>
+            </p>
+          </Message.Content>
         </Message>
 
         <Header as="h2">Price</Header>
