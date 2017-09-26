@@ -81,7 +81,7 @@ const Index = ({ authAccount }) => (
             you cannot buy virtual currency of any kind from us.
           </strong>{' '}
           You are paying for our internet hosting service, and we use the Sia
-          network to provide that service to you.
+          network in part of providing that service to you.
         </Message>
 
         <Header as="h2">Steps</Header>
