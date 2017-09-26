@@ -9,6 +9,7 @@ import {
   Form,
 } from 'semantic-ui-react';
 import Client from '../lib/client';
+import Nav from '../components/nav';
 
 export default class LoginForm extends React.Component {
   state = { error: null, submitting: false, authAccount: null };
@@ -48,6 +49,7 @@ export default class LoginForm extends React.Component {
           <script src="https://js.stripe.com/v3/"></script>
         </Head>
         <div className="holder">
+          <Nav activeItem="login" authAccount={null} />
           <Segment padded>
             <Header as="h1">Log in</Header>
             <Form onSubmit={this.handleSubmit}>

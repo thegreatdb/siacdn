@@ -9,6 +9,7 @@ import {
 } from 'semantic-ui-react';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
+import Nav from '../components/nav';
 
 const Dashboard = ({ authAccount }) => (
   <div>
@@ -21,6 +22,7 @@ const Dashboard = ({ authAccount }) => (
       <script src="https://js.stripe.com/v3/"></script>
     </Head>
     <div className="holder">
+      <Nav activeItem="dashboard" authAccount={authAccount} />
       <Segment padded>
         <Header as="h1">SiaCDN</Header>
         <p>This is your dashboard</p>
@@ -31,7 +33,6 @@ const Dashboard = ({ authAccount }) => (
 
 Dashboard.getInitialProps = async ctx => {
   const { authTokenID } = cookies(ctx);
-  console.log({ authTokenID });
   const client = new Client(authTokenID);
   let authAccount = null;
   try {

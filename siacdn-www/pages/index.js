@@ -8,6 +8,7 @@ import {
   Button,
   List,
 } from 'semantic-ui-react';
+import Nav from '../components/nav';
 
 export default () => (
   <div>
@@ -20,6 +21,7 @@ export default () => (
       <script src="https://js.stripe.com/v3/"></script>
     </Head>
     <div className="holder">
+      <Nav activeItem="index" authAccount={null} />
       <Segment padded>
         <Header as="h1">SiaCDN</Header>
         <p>

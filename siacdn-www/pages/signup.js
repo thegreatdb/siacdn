@@ -12,6 +12,7 @@ import {
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import {StripeProvider, Elements, CardElement, injectStripe} from 'react-stripe-elements';
+import Nav from '../components/nav';
 
 const IS_SERVER = typeof window === 'undefined';
 
@@ -90,6 +91,7 @@ const render = () => (
       <script src="https://js.stripe.com/v3/"></script>
     </Head>
     <div className="holder">
+      <Nav activeItem="signup" authAccount={null} />
       <Segment padded>
         <Header as="h1">Sign up</Header>
         <SignupForm />
