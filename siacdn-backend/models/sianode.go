@@ -22,11 +22,12 @@ const SIANODE_STATUS_ERROR = "error"               // An error has occurred in t
 type SiaNode struct {
 	ID          uuid.UUID `json:"id"`
 	Shortcode   string    `json:"shortcode"`
+	Capacity    int       `json:"capacity"`
 	Status      string    `json:"status"`
 	CreatedTime time.Time `json:"created_time"`
 }
 
-func NewSiaNode() (*SiaNode, error) {
+func NewSiaNode(capacity int) (*SiaNode, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
@@ -35,6 +36,7 @@ func NewSiaNode() (*SiaNode, error) {
 	return &SiaNode{
 		ID:          id,
 		Shortcode:   shortcode,
+		Capacity:    capacity,
 		Status:      SIANODE_STATUS_CREATED,
 		CreatedTime: time.Now().UTC(),
 	}, nil

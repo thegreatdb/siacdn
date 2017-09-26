@@ -39,6 +39,12 @@ export default class Client {
     return this._reg('/auth', email, password);
   }
 
+  async createSiaNode(capacity) {
+    const body = { capacity };
+    const resp = await this.post('/sianodes', null, JSON.stringify(body));
+    return resp.sianode;
+  }
+
   // Supporting and utility functions follow
 
   headers() {

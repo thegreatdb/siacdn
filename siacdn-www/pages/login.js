@@ -50,7 +50,7 @@ export default class LoginForm extends React.Component {
           <Segment padded>
             <Header as="h1">Log in</Header>
             <Form error={hasError} loading={submitting} onSubmit={this.handleSubmit}>
-              {hasError ? <Message header="Whoops!" content={hasError ? '' + error.message : null} error /> : null}
+              {hasError ? <Message header="Whoops!" content={error.message} error /> : null}
               <Form.Field>
                 <label>E-Mail</label>
                 <input placeholder="E-Mail" ref={e => (this.email = e)} />

@@ -59,7 +59,7 @@ class SignupForm extends React.Component {
     const hasError = Boolean(error);
     return (
       <Form error={hasError} loading={submitting} onSubmit={this.handleSubmit}>
-        {hasError ? <Message header="Whoops!" content={hasError ? '' + error.message : null} error /> : null}
+        {hasError ? <Message header="Whoops!" content={'' + error.message} error /> : null}
         <Form.Field>
           <label>E-Mail</label>
           <input placeholder="E-Mail" type="email" ref={e => (this.email = e)} />

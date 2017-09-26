@@ -18,6 +18,7 @@ var ErrNotFound = errors.New("Database object not found")
 type Database struct {
 	Accounts   map[uuid.UUID]*models.Account   `json:"accounts"`
 	AuthTokens map[uuid.UUID]*models.AuthToken `json:"auth_tokens"`
+	SiaNodes   map[uuid.UUID]*models.SiaNode   `json:"sianodes"`
 
 	filepath string
 	mu       *sync.RWMutex
@@ -29,6 +30,9 @@ func (db *Database) EnsureDefaults(filepath string) {
 	}
 	if db.AuthTokens == nil {
 		db.AuthTokens = map[uuid.UUID]*models.AuthToken{}
+	}
+	if db.SiaNodes == nil {
+		db.SiaNodes = map[uuid.UUID]*models.SiaNode{}
 	}
 	if filepath != "" && db.filepath != filepath {
 		db.filepath = filepath

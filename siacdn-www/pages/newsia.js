@@ -13,6 +13,7 @@ import {
   Form,
   Menu,
   Dropdown,
+  Message
 } from 'semantic-ui-react';
 import Nav from '../components/nav';
 import redirect from '../lib/redirect';
@@ -34,7 +35,10 @@ const siaCostOptions = [
 export default class NewSia extends React.Component {
   state = {
     stage: 'sia',
-    selectedCost: 1,
+    selectedCost: -1,
+    siaError: null,
+    siaSubmitting: false,
+    siaNode: null
   };
 
   static async getInitialProps(ctx) {
@@ -49,16 +53,39 @@ export default class NewSia extends React.Component {
     } catch (err) {
       redirect(ctx, '/signup');
     }
-    return { authAccount };
+    return { authTokenID, authAccount };
   }
 
-  async handleSiaCapacityChange(ev, data) {
+  handleSiaCapacityChange = async (ev, data) => {
     await this.setState({ selectedCost: data.value });
-  }
+  };
+
+  handleSiaSubmit = async (ev) => {
+    ev.preventDefault();
+
+    const { authTokenID } = this.props;
+    const { selectedCost } = this.state;
+    if (selectedCost < 0) {
+      await this.setState({siaError: {message: 'You should select a capacity'}});
+      return;
+    }
+    await this.setState({ siaError: null, siaSubmitting: true });
+    try {
+      const client = new Client(authTokenID);
+      console.log('creating sia node');
+      const siaNode = await client.createSiaNode(siaCostOptions[selectedCost].key);
+      console.log('created sia node', siaNode);
+      await this.setState({ siaSubmitting: false, siaNode: siaNode });
+    } catch (error) {
+      console.log('errored creating sia node', error);
+      await this.setState({ siaError: error, siaSubmitting: false });
+    }
+  };
 
   render() {
     const { authAccount } = this.props;
-    const { stage, selectedCost } = this.state;
+    const { stage, selectedCost, siaSubmitting, siaError } = this.state;
+    const hasSiaError = Boolean(siaError);
     return (
       <div>
         <Head>
@@ -98,7 +125,8 @@ export default class NewSia extends React.Component {
           </Step.Group>
           <Segment padded>
             <Header as="h3">Sia Node</Header>
-            <Form>
+            <Form error={hasSiaError} loading={siaSubmitting} onSubmit={this.handleSiaSubmit}>
+              {hasSiaError ? <Message header="Whoops!" content={siaError.message} error /> : null}
               <Form.Field>
                 <label>Node base monthly price</label>
                 $10
@@ -107,7 +135,7 @@ export default class NewSia extends React.Component {
                 <label>Sia node capacity</label>
                 <Form.Select
                   options={siaCostOptions}
-                  onChange={this.handleSiaCapacityChange.bind(this)}
+                  onChange={this.handleSiaCapacityChange}
                   placeholder="Sia node capacity"
                 />
               </Form.Field>

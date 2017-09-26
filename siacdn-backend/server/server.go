@@ -47,6 +47,7 @@ func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r.GET("/auth", s.handleGetAuth)
 	r.POST("/accounts", s.handleCreateAccount)
 	r.POST("/auth", s.handleCreateAuthToken)
+	r.POST("/sianodes", s.handleCreateSiaNode)
 	r.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.JsonErr(w, "Not found")
 	})
