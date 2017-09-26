@@ -27,7 +27,7 @@ const Nav = ({ activeItem, authAccount }) => (
               primary
               disabled={activeItem === 'newsia'}
             >
-              <Icon name="database" />New Sia Node
+              <Icon name="database" />New Sia node
             </Button>
           </Menu.Item>
         ) : null}

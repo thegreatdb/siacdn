@@ -29,6 +29,19 @@ const Index = ({ authAccount }) => (
           node.
         </p>
 
+        <Header as="h2">Price</Header>
+        <p>
+          We charge a flat fee for our services of <strong>$30/month</strong>{' '}
+          per full Sia node, <strong>$10/month</strong> per Minio instance, and{' '}
+          <strong>$0.03/GB</strong> bandwidth out. This is more than we&rsquo;d
+          like to charge, but it&rsquo;s because we currently have to proxy all
+          traffic and pay those bandwidth costs. In the future we will be able
+          to cut this down dramatically when the Sia network{' '}
+          <strong>adds CDN functionality</strong>. Note that you cannot buy any
+          SiaCoins from us - you are paying for our hosting services and we use
+          the Sia network to provide those services to you.
+        </p>
+
         <Header as="h2">Steps</Header>
         <Grid columns={3} divided>
           <Grid.Row>
@@ -40,7 +53,7 @@ const Index = ({ authAccount }) => (
                     src="https://react.semantic-ui.com/assets/images/wireframe/image.png"
                   />
                   <Item.Content verticalAlign="middle">
-                    Fund your account with SiaCoins
+                    Start a Sia full node in the cloud
                   </Item.Content>
                 </Item>
               </Item.Group>
@@ -53,7 +66,7 @@ const Index = ({ authAccount }) => (
                     src="https://react.semantic-ui.com/assets/images/wireframe/image.png"
                   />
                   <Item.Content verticalAlign="middle">
-                    Set your budget
+                    Choose your scaling options
                   </Item.Content>
                 </Item>
               </Item.Group>
@@ -89,8 +102,7 @@ Index.getInitialProps = async ctx => {
   let authAccount = null;
   try {
     authAccount = await client.getAuthAccount();
-  } catch (err) {
-  }
+  } catch (err) {}
   return { authAccount };
 };
 
