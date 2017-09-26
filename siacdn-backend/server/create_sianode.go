@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/thegreatdb/siacdn/siacdn-backend/db"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 )
 
@@ -14,6 +15,17 @@ type createSiaNodeForm struct {
 }
 
 func (s *HTTPDServer) handleCreateSiaNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	req := NewRequest(r, s.db)
+	account, err := req.GetAccount()
+	if err != nil && err != db.ErrNotFound {
+		s.JsonErr(w, err.Error())
+		return
+	}
+	if account == nil || err == db.ErrNotFound {
+		s.JsonErr(w, "You must be authenticated to access this resource")
+		return
+	}
+
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		s.JsonErr(w, "Could not read data: "+err.Error())
@@ -34,7 +46,7 @@ func (s *HTTPDServer) handleCreateSiaNode(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	sn, err := models.NewSiaNode(form.Capacity)
+	sn, err := models.NewSiaNode(account.ID, form.Capacity)
 	if err != nil {
 		s.JsonErr(w, "Could not create new Sia node: "+err.Error())
 		return

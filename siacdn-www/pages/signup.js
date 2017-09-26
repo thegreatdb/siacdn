@@ -17,7 +17,7 @@ import Nav from '../components/nav';
 const IS_SERVER = typeof window === 'undefined';
 
 class SignupForm extends React.Component {
-  state = { error: null, submitting: false};
+  state = { error: null, submitting: false };
 
   static async getInitialProps(ctx) {
     const { authTokenID } = cookies(ctx);
@@ -27,7 +27,7 @@ class SignupForm extends React.Component {
   handleSubmit = async (ev, err) => {
     ev.preventDefault();
     if (this.password1.value != this.password2.value) {
-      await this.setState({error: {message: 'Passwords must match'}});
+      await this.setState({ error: { message: 'Passwords must match' } });
       return;
     }
     await this.setState({ error: null, submitting: true });
@@ -59,10 +59,16 @@ class SignupForm extends React.Component {
     const hasError = Boolean(error);
     return (
       <Form error={hasError} loading={submitting} onSubmit={this.handleSubmit}>
-        {hasError ? <Message header="Whoops!" content={'' + error.message} error /> : null}
+        {hasError ? (
+          <Message header="Whoops!" content={'' + error.message} error />
+        ) : null}
         <Form.Field>
           <label>E-Mail</label>
-          <input placeholder="E-Mail" type="email" ref={e => (this.email = e)} />
+          <input
+            placeholder="E-Mail"
+            type="email"
+            ref={e => (this.email = e)}
+          />
         </Form.Field>
         <Form.Field>
           <label>Password</label>

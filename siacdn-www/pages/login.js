@@ -49,8 +49,14 @@ export default class LoginForm extends React.Component {
           <Nav activeItem="login" authAccount={null} />
           <Segment padded>
             <Header as="h1">Log in</Header>
-            <Form error={hasError} loading={submitting} onSubmit={this.handleSubmit}>
-              {hasError ? <Message header="Whoops!" content={error.message} error /> : null}
+            <Form
+              error={hasError}
+              loading={submitting}
+              onSubmit={this.handleSubmit}
+            >
+              {hasError ? (
+                <Message header="Whoops!" content={error.message} error />
+              ) : null}
               <Form.Field>
                 <label>E-Mail</label>
                 <input placeholder="E-Mail" ref={e => (this.email = e)} />

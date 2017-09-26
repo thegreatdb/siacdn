@@ -32,3 +32,14 @@ func (db *Database) SaveSiaNode(sn *models.SiaNode) error {
 	db.SiaNodes[sn.ID] = sn
 	return db.Save()
 }
+
+func (db *Database) GetOrphanedSiaNode(accountID uuid.UUID) (*models.SiaNode, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	for _, sn := range db.SiaNodes {
+		if sn.AccountID == accountID && sn.Pending() {
+			return sn, nil
+		}
+	}
+	return nil, ErrNotFound
+}
