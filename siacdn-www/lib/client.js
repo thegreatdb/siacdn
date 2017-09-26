@@ -31,8 +31,8 @@ export default class Client {
     return this.authAccount;
   }
 
-  createAccount(username, password, stripeToken) {
-    return this._reg('/accounts', username, password, stripeToken);
+  createAccount(username, password, name, stripeToken) {
+    return this._reg('/accounts', username, password, name, stripeToken);
   }
 
   loginAccount(username, password) {
@@ -68,8 +68,11 @@ export default class Client {
     return fetchJSON(url, opts);
   }
 
-  async _reg(path, username, password, stripeToken) {
+  async _reg(path, username, password, name, stripeToken) {
     let dat = { username, password };
+    if (name) {
+      dat['name'] = name;
+    }
     if (stripeToken) {
       dat['stripe_token'] = stripeToken;
     }

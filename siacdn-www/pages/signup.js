@@ -30,13 +30,14 @@ class SignupForm extends React.Component {
     }
     const { token } = await this.props.stripe.createToken({
       type: 'card',
-      name: 'Jenny Rosen',
+      name: this.name.value,
     });
     const { authTokenID } = this.props;
     const client = new Client(authTokenID);
     const account = await client.createAccount(
       this.username.value,
       this.password1.value,
+      this.name.value,
       token
     );
     Router.push('/dashboard');
@@ -64,6 +65,10 @@ class SignupForm extends React.Component {
             placeholder="Password (Repeat)"
             ref={e => (this.password2 = e)}
           />
+        </Form.Field>
+        <Form.Field>
+          <label>First and last name</label>
+          <input placeholder="First and last name" ref={e => (this.name = e)} />
         </Form.Field>
         <Form.Field>
           <label>

@@ -13,10 +13,11 @@ type Account struct {
 	ID           uuid.UUID `json:"id"`
 	Username     string    `json:"username"`
 	PasswordHash string    `json:"password_hash"`
+	Name         string    `json:"name"`
 	CreatedTime  time.Time `json:"created_time"`
 }
 
-func NewAccount(username, password string) (*Account, error) {
+func NewAccount(username, password, name string) (*Account, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
@@ -24,6 +25,7 @@ func NewAccount(username, password string) (*Account, error) {
 	acc := &Account{
 		ID:          id,
 		Username:    username,
+		Name:        name,
 		CreatedTime: time.Now().UTC(),
 	}
 	if err = acc.SetPassword(password); err != nil {
