@@ -59,7 +59,7 @@ const Index = ({ authAccount }) => (
               $1.20/TB
             </a>
           </strong>{' '}
-          of Sia network storage and{' '}
+          for Sia network storage and{' '}
           <strong>
             <a
               href="https://cloud.google.com/compute/pricing#internet_egress"
@@ -68,7 +68,7 @@ const Index = ({ authAccount }) => (
               $0.025/GB
             </a>
           </strong>{' '}
-          of bandwidth out. This is more than we&rsquo;d like to charge, but
+          for bandwidth out. This is more than we&rsquo;d like to charge, but
           it&rsquo;s because we currently have to proxy all traffic and pay
           those bandwidth costs. In the future we will reduce the costs
           substantially by offloading the majority of the work to the Sia
