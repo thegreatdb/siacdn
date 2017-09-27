@@ -39,23 +39,7 @@ func KubeCommand() urfavecli.Command {
 }
 
 func kubeCommand(c *urfavecli.Context) error {
-	home := homeDir()
-	kubeConfig := filepath.Join(home, ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		log.Println("Problem with default kube config: " + err.Error())
-		log.Println("Trying in-cluster config...")
-		config, err = rest.InClusterConfig()
-		if err != nil {
-			log.Println("Could not get kube cluster config to work: " + err.Error())
-			return err
-		}
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Println("Could not create clientset from config: " + err.Error())
-		return err
-	}
+	clientset, err := getKubeClient()
 	for {
 		if err = PerformKubeRun(clientset); err != nil {
 			return err
@@ -63,84 +47,6 @@ func kubeCommand(c *urfavecli.Context) error {
 		time.Sleep(time.Second / 2)
 	}
 	return nil
-}
-
-func getPendingSiaNodes() ([]*models.SiaNode, error) {
-	log.Println("getPendingSiaNodes()")
-	url := fmt.Sprintf("%s/sianodes/pending/all?secret=%s", URLRoot, SiaCDNSecretKey)
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Println("Could not create request GET " + url)
-		return nil, err
-	}
-
-	res, err := cliClient.Do(req)
-	if err != nil {
-		log.Println("Error making getPendingSiaNodes request: " + err.Error())
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Println("Could not read getPendingSiaNodes response: " + err.Error())
-		return nil, err
-	}
-
-	var nodes struct {
-		SiaNodes []*models.SiaNode `json:"sianodes"`
-	}
-	if err = json.Unmarshal(body, &nodes); err != nil {
-		log.Println("Could not decode response: " + err.Error())
-		return nil, err
-	}
-
-	return nodes.SiaNodes, nil
-}
-
-func updateSiaNodeStatus(id uuid.UUID, status string) (*models.SiaNode, error) {
-	url := fmt.Sprintf("%s/sianodes/status?secret=%s", URLRoot, SiaCDNSecretKey)
-
-	reqBodyData := struct {
-		Id     uuid.UUID `json:"id"`
-		Status string    `json:"status"`
-	}{Id: id, Status: status}
-
-	buf := &bytes.Buffer{}
-	err := json.NewEncoder(buf).Encode(reqBodyData)
-	if err != nil {
-		log.Println("Could not encode sia node update json: " + err.Error())
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, url, buf)
-	if err != nil {
-		log.Println("Could not create request POST " + url)
-		return nil, err
-	}
-
-	res, err := cliClient.Do(req)
-	if err != nil {
-		log.Println("Error making updateSiaNodeStatus request: " + err.Error())
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Println("Could not read updateSiaNodeStatus response: " + err.Error())
-		return nil, err
-	}
-
-	var node struct {
-		SiaNode *models.SiaNode `json:"sianode"`
-	}
-	if err = json.Unmarshal(body, &node); err != nil {
-		log.Println("Could not decode response: " + err.Error())
-		return nil, err
-	}
-	return node.SiaNode, nil
 }
 
 func PerformKubeRun(clientset *kubernetes.Clientset) error {
@@ -343,9 +249,112 @@ func pollKubeConfigured(clientset *kubernetes.Clientset, siaNode *models.SiaNode
 	return nil
 }
 
+// Utils
+
 func homeDir() string {
 	if h := os.Getenv("HOME"); h != "" {
 		return h
 	}
 	return os.Getenv("USERPROFILE") // windows
+}
+
+func getKubeClient() (*kubernetes.Clientset, error) {
+	home := homeDir()
+	kubeConfig := filepath.Join(home, ".kube", "config")
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+	if err != nil {
+		log.Println("Problem with default kube config: " + err.Error())
+		log.Println("Trying in-cluster config...")
+		config, err = rest.InClusterConfig()
+		if err != nil {
+			log.Println("Could not get kube cluster config to work: " + err.Error())
+			return nil, err
+		}
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Println("Could not create clientset from config: " + err.Error())
+		return nil, err
+	}
+	return clientset, nil
+}
+
+// Administrative API Calls
+
+func getPendingSiaNodes() ([]*models.SiaNode, error) {
+	log.Println("getPendingSiaNodes()")
+	url := fmt.Sprintf("%s/sianodes/pending/all?secret=%s", URLRoot, SiaCDNSecretKey)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Println("Could not create request GET " + url)
+		return nil, err
+	}
+
+	res, err := cliClient.Do(req)
+	if err != nil {
+		log.Println("Error making getPendingSiaNodes request: " + err.Error())
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("Could not read getPendingSiaNodes response: " + err.Error())
+		return nil, err
+	}
+
+	var nodes struct {
+		SiaNodes []*models.SiaNode `json:"sianodes"`
+	}
+	if err = json.Unmarshal(body, &nodes); err != nil {
+		log.Println("Could not decode response: " + err.Error())
+		return nil, err
+	}
+
+	return nodes.SiaNodes, nil
+}
+
+func updateSiaNodeStatus(id uuid.UUID, status string) (*models.SiaNode, error) {
+	url := fmt.Sprintf("%s/sianodes/status?secret=%s", URLRoot, SiaCDNSecretKey)
+
+	reqBodyData := struct {
+		Id     uuid.UUID `json:"id"`
+		Status string    `json:"status"`
+	}{Id: id, Status: status}
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(reqBodyData)
+	if err != nil {
+		log.Println("Could not encode sia node update json: " + err.Error())
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		log.Println("Could not create request POST " + url)
+		return nil, err
+	}
+
+	res, err := cliClient.Do(req)
+	if err != nil {
+		log.Println("Error making updateSiaNodeStatus request: " + err.Error())
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("Could not read updateSiaNodeStatus response: " + err.Error())
+		return nil, err
+	}
+
+	var node struct {
+		SiaNode *models.SiaNode `json:"sianode"`
+	}
+	if err = json.Unmarshal(body, &node); err != nil {
+		log.Println("Could not decode response: " + err.Error())
+		return nil, err
+	}
+	return node.SiaNode, nil
 }
