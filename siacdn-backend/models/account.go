@@ -36,6 +36,12 @@ func NewAccount(email, password, name, stripeCustomerID string) (*Account, error
 	return acc, nil
 }
 
+func (acc *Account) Copy() *Account {
+	var cpy Account
+	cpy = *acc
+	return &cpy
+}
+
 func (acc *Account) SetPassword(password string) error {
 	hsh, err := bcrypt.GenerateFromPassword([]byte(password), BCRYPT_COST)
 	if err != nil {

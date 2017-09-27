@@ -23,3 +23,9 @@ func NewAuthToken(accountID uuid.UUID) (*AuthToken, error) {
 		CreatedTime: time.Now().UTC(),
 	}, nil
 }
+
+func (tok *AuthToken) Copy() *AuthToken {
+	var cpy AuthToken
+	cpy = *tok
+	return &cpy
+}

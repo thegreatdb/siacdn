@@ -45,6 +45,32 @@ func NewSiaNode(accountID uuid.UUID, capacity int) (*SiaNode, error) {
 	}, nil
 }
 
+func (sn *SiaNode) Copy() *SiaNode {
+	var cpy SiaNode
+	cpy = *sn
+	return &cpy
+}
+
+func (sn *SiaNode) ValidateStatus() error {
+	switch sn.Status {
+	case SIANODE_STATUS_CREATED,
+		SIANODE_STATUS_DEPLOYED,
+		SIANODE_STATUS_INSTANCED,
+		SIANODE_STATUS_SNAPSHOTTED,
+		SIANODE_STATUS_SYNCHRONIZED,
+		SIANODE_STATUS_INITIALIZED,
+		SIANODE_STATUS_FUNDED,
+		SIANODE_STATUS_CONFIGURED,
+		SIANODE_STATUS_READY,
+		SIANODE_STATUS_STOPPED,
+		SIANODE_STATUS_DEPLETED,
+		SIANODE_STATUS_ERROR:
+		return nil
+	default:
+		return fmt.Errorf("Invalid SiaNode status: '%s'", sn.Status)
+	}
+}
+
 func (sn *SiaNode) Pending() bool {
 	switch sn.Status {
 	case SIANODE_STATUS_READY,

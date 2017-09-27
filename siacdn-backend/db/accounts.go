@@ -11,7 +11,7 @@ func (db *Database) GetAccount(id uuid.UUID) (*models.Account, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	if account, ok := db.Accounts[id]; ok {
-		return account, nil
+		return account.Copy(), nil
 	} else {
 		return nil, ErrNotFound
 	}
@@ -22,7 +22,7 @@ func (db *Database) GetAccountByEmail(email string) (*models.Account, error) {
 	defer db.mu.RUnlock()
 	for _, acc := range db.Accounts {
 		if strings.ToLower(acc.Email) == strings.ToLower(email) {
-			return acc, nil
+			return acc.Copy(), nil
 		}
 	}
 	return nil, ErrNotFound

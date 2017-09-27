@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 	urfavecli "github.com/urfave/cli"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -64,6 +66,7 @@ func kubeCommand(c *urfavecli.Context) error {
 }
 
 func getPendingSiaNodes() ([]*models.SiaNode, error) {
+	log.Println("getPendingSiaNodes()")
 	url := fmt.Sprintf("%s/sianodes/pending/all?secret=%s", URLRoot, SiaCDNSecretKey)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -74,14 +77,14 @@ func getPendingSiaNodes() ([]*models.SiaNode, error) {
 
 	res, err := cliClient.Do(req)
 	if err != nil {
-		log.Println("Error making GetPendingSiaNodes request: " + err.Error())
+		log.Println("Error making getPendingSiaNodes request: " + err.Error())
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Println("Could not read GetPendingSiaNodes response: " + err.Error())
+		log.Println("Could not read getPendingSiaNodes response: " + err.Error())
 		return nil, err
 	}
 
@@ -94,6 +97,50 @@ func getPendingSiaNodes() ([]*models.SiaNode, error) {
 	}
 
 	return nodes.SiaNodes, nil
+}
+
+func updateSiaNodeStatus(id uuid.UUID, status string) (*models.SiaNode, error) {
+	url := fmt.Sprintf("%s/sianodes/status?secret=%s", URLRoot, SiaCDNSecretKey)
+
+	reqBodyData := struct {
+		Id     uuid.UUID `json:"id"`
+		Status string    `json:"status"`
+	}{Id: id, Status: status}
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(reqBodyData)
+	if err != nil {
+		log.Println("Could not encode sia node update json: " + err.Error())
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		log.Println("Could not create request POST " + url)
+		return nil, err
+	}
+
+	res, err := cliClient.Do(req)
+	if err != nil {
+		log.Println("Error making updateSiaNodeStatus request: " + err.Error())
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("Could not read updateSiaNodeStatus response: " + err.Error())
+		return nil, err
+	}
+
+	var node struct {
+		SiaNode *models.SiaNode `json:"sianode"`
+	}
+	if err = json.Unmarshal(body, &node); err != nil {
+		log.Println("Could not decode response: " + err.Error())
+		return nil, err
+	}
+	return node.SiaNode, nil
 }
 
 func PerformKubeRun(clientset *kubernetes.Clientset) error {
@@ -257,10 +304,8 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 		log.Println("Found deployment " + siaNode.KubeNameDep())
 	}
 
-	log.Println("TODO: Change state from created to deployed")
-	// TODO: Change the state of the siaNode to deployed
-
-	return nil
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_DEPLOYED)
+	return err
 }
 
 func pollKubeDeployed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {

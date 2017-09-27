@@ -9,7 +9,7 @@ func (db *Database) GetAuthToken(id uuid.UUID) (*models.AuthToken, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	if tok, ok := db.AuthTokens[id]; ok {
-		return tok, nil
+		return tok.Copy(), nil
 	} else {
 		return nil, ErrNotFound
 	}
