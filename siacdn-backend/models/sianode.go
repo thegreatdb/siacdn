@@ -2,11 +2,17 @@ package models
 
 import (
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/NebulousLabs/Sia/api"
 	"github.com/google/uuid"
+	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
 	"github.com/thegreatdb/siacdn/siacdn-backend/randstring"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const kubeNamespace = "sia"
 
 const SIANODE_STATUS_CREATED = "created"           // This object has been created
 const SIANODE_STATUS_DEPLOYED = "deployed"         // Deployment yaml has been sent to kube
@@ -49,6 +55,34 @@ func (sn *SiaNode) Copy() *SiaNode {
 	var cpy SiaNode
 	cpy = *sn
 	return &cpy
+}
+
+func (sn *SiaNode) SiaClient() (*api.Client, error) {
+	clientset, clusterType, err := kube.KubeClient()
+	if err != nil {
+		return nil, err
+	}
+	services := clientset.Services(kubeNamespace)
+	service, err := services.Get(sn.KubeNameSer(), metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if service == nil {
+		return nil, fmt.Errorf("Service not found: " + sn.Shortcode)
+	}
+	var ip string
+	if clusterType == kube.ClusterTypeExternal {
+		log.Println("Found external cluster, assuming local tunnel. " +
+			"Run the following command:\n\n\t" +
+			"kubectl --namespace=sia port-forward " +
+			"$(kubectl --namespace=sia get pods -l app=" + sn.KubeNameApp() +
+			" -o jsonpath=\"{.items[0].metadata.name}\") 9980\n")
+		ip = "localhost"
+	} else {
+		ip = service.Spec.ClusterIP
+	}
+	client := api.NewClient(ip+":9980", "")
+	return client, nil
 }
 
 func (sn *SiaNode) ValidateStatus() error {

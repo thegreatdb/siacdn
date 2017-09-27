@@ -7,11 +7,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
+	"github.com/NebulousLabs/Sia/api"
 	"github.com/google/uuid"
+	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 	urfavecli "github.com/urfave/cli"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,8 +21,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const kubeNamespace = "sia"
@@ -39,7 +37,7 @@ func KubeCommand() urfavecli.Command {
 }
 
 func kubeCommand(c *urfavecli.Context) error {
-	clientset, err := getKubeClient()
+	clientset, _, err := kube.KubeClient()
 	for {
 		if err = PerformKubeRun(clientset); err != nil {
 			return err
@@ -216,16 +214,56 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 
 func pollKubeDeployed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeDeployed: " + siaNode.Shortcode)
-	return nil
+	pod, _ := getPod(clientset, siaNode)
+	if pod == nil || pod.Name == "" {
+		return nil
+	}
+	log.Println("Found pod " + siaNode.KubeNameDep())
+	_, err := updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_INSTANCED)
+	return err
 }
 
 func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInstanced: " + siaNode.Shortcode)
-	return nil
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		return err
+	}
+
+	var resp api.ConsensusGET
+	if err = client.Get("/consensus", &resp); err != nil {
+		log.Println("Got error checking for consensus: " + err.Error())
+		return err
+	}
+
+	log.Println("Finished snapshotting Sia node " + siaNode.Shortcode)
+
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_SNAPSHOTTED)
+
+	return err
 }
 
 func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeSnapshotted: " + siaNode.Shortcode)
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		return err
+	}
+
+	var resp api.ConsensusGET
+	if err = client.Get("/consensus", &resp); err != nil {
+		log.Println("Got error checking for consensus: " + err.Error())
+		return err
+	}
+
+	if resp.Synced {
+		log.Println("Finished syncing blockchain on Sia node " + siaNode.Shortcode)
+		_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_SYNCHRONIZED)
+		return err
+	}
+
 	return nil
 }
 
@@ -251,32 +289,20 @@ func pollKubeConfigured(clientset *kubernetes.Clientset, siaNode *models.SiaNode
 
 // Utils
 
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
-	}
-	return os.Getenv("USERPROFILE") // windows
-}
-
-func getKubeClient() (*kubernetes.Clientset, error) {
-	home := homeDir()
-	kubeConfig := filepath.Join(home, ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		log.Println("Problem with default kube config: " + err.Error())
-		log.Println("Trying in-cluster config...")
-		config, err = rest.InClusterConfig()
-		if err != nil {
-			log.Println("Could not get kube cluster config to work: " + err.Error())
-			return nil, err
-		}
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Println("Could not create clientset from config: " + err.Error())
+func getPod(clientset *kubernetes.Clientset, siaNode *models.SiaNode) (*v1.Pod, error) {
+	opts := metav1.ListOptions{LabelSelector: "app=" + siaNode.KubeNameApp()}
+	pods, err := clientset.Pods(kubeNamespace).List(opts)
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting pod from kubernetes: " + err.Error())
 		return nil, err
 	}
-	return clientset, nil
+
+	if pods == nil || errors.IsNotFound(err) || pods.Items == nil || len(pods.Items) == 0 {
+		log.Println("Not found yet: " + siaNode.KubeNameApp())
+		return nil, err
+	}
+
+	return &pods.Items[0], nil
 }
 
 // Administrative API Calls

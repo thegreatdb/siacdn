@@ -2,6 +2,36 @@
 
 
 [[projects]]
+  name = "github.com/NebulousLabs/Sia"
+  packages = ["api","build","crypto","encoding","modules","modules/renter","modules/renter/contractor","modules/renter/hostdb","modules/renter/hostdb/hosttree","modules/renter/proto","persist","sync","types"]
+  revision = "3702bedf19fe60165021a225103ad586b3cf7ebd"
+  version = "v1.3.0"
+
+[[projects]]
+  name = "github.com/NebulousLabs/bolt"
+  packages = ["."]
+  revision = "aa66506030b376f848667d84d2596faa8a7099ea"
+  version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/NebulousLabs/entropy-mnemonics"
+  packages = ["."]
+  revision = "7b01a644a63680b90de22bacfb11d832e944eaab"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/NebulousLabs/fastrand"
+  packages = ["."]
+  revision = "60b615657d85339c105efb2170327a2d948d4b17"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/NebulousLabs/merkletree"
+  packages = ["."]
+  revision = "8482d024aa8ffc16d2d4246e84e943aca109a8dc"
+
+[[projects]]
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
   revision = "0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4"
@@ -146,6 +176,18 @@
   version = "v1.1"
 
 [[projects]]
+  name = "github.com/klauspost/cpuid"
+  packages = ["."]
+  revision = "ae7887de9fa5d2db4eaa8174a7eff2c1ac00f2da"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/klauspost/reedsolomon"
+  packages = ["."]
+  revision = "87ba8262ab3d167ae4d38e22796312cd2a9d0b19"
+  version = "v1.5"
+
+[[projects]]
   branch = "master"
   name = "github.com/mailru/easyjson"
   packages = ["buffer","jlexer","jwriter"]
@@ -189,7 +231,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["bcrypt","blowfish","ssh/terminal"]
+  packages = ["bcrypt","blake2b","blowfish","ed25519","ed25519/internal/edwards25519","ssh/terminal","twofish"]
   revision = "847319b7fc94cab682988f93da778204da164588"
 
 [[projects]]
@@ -243,6 +285,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb4a54e90b9cbbc0d6405e91526c06f737e6e4ec3db8f45a94769cfb950d22ae"
+  inputs-digest = "35a0db030f65f0f47267232be98327eee6e298ec4ea5bca4bad6810269d4b48f"
   solver-name = "gps-cdcl"
   solver-version = 1
