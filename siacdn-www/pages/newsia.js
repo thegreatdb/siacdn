@@ -39,7 +39,7 @@ const displayStatus = {
   snapshotted:
     'Finished snapshotting, downloading latest blockchain updates...',
   synchronized: 'Initializing wallet...',
-  initialized: 'Transferring funds based on your requested capacity...',
+  initialized: 'Transferring funds to your Sia node based on requested capacity...',
   funded: 'Setting allowance...',
   configured: 'Waiting for contracts to finalize...',
   ready: 'Sia node is up and running!',
