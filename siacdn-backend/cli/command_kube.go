@@ -2,13 +2,20 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 	urfavecli "github.com/urfave/cli"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func KubeCommand() urfavecli.Command {
@@ -21,8 +28,26 @@ func KubeCommand() urfavecli.Command {
 }
 
 func kubeCommand(c *urfavecli.Context) error {
+	home := homeDir()
+	kubeConfig := filepath.Join(home, ".kube", "config")
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+	if err != nil {
+		panic(err.Error())
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+	pods, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			fmt.Printf("Pod not found\n")
+		}
+		panic(err.Error())
+	}
+	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
 	for {
-		if err := PerformKubeRun(); err != nil {
+		if err = PerformKubeRun(); err != nil {
 			return err
 		}
 		time.Sleep(time.Second / 2)
@@ -139,4 +164,11 @@ func pollKubeFunded(siaNode *models.SiaNode) error {
 func pollKubeConfigured(siaNode *models.SiaNode) error {
 	log.Println("PollKubeConfigured: " + siaNode.Shortcode)
 	return nil
+}
+
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
+	}
+	return os.Getenv("USERPROFILE") // windows
 }
