@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thegreatdb/siacdn/siacdn-backend/randstring"
 )
 
 const SIANODE_STATUS_CREATED = "created"           // This object has been created
@@ -33,10 +34,9 @@ func NewSiaNode(accountID uuid.UUID, capacity int) (*SiaNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	shortcode := id.String() // TODO: This needs to make it shorter lol
 	return &SiaNode{
 		ID:          id,
-		Shortcode:   shortcode,
+		Shortcode:   randstring.New(8),
 		AccountID:   accountID,
 		Capacity:    capacity,
 		Status:      SIANODE_STATUS_CREATED,

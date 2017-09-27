@@ -51,6 +51,10 @@ func (s *HTTPDServer) handleCreateSiaNode(w http.ResponseWriter, r *http.Request
 		s.JsonErr(w, "Could not create new Sia node: "+err.Error())
 		return
 	}
+
+	// TODO: Look up and make sure a Sia node with the same shortcode doesn't
+	//       already exist, and if so, generate a new shortcode.
+
 	if err = s.db.SaveSiaNode(sn); err != nil {
 		s.JsonErr(w, "Could not save created Sia node: "+err.Error())
 		return
