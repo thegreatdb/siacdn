@@ -233,8 +233,8 @@ func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode)
 
 	var resp api.ConsensusGET
 	if err = client.Get("/consensus", &resp); err != nil {
-		log.Println("Got error checking for consensus: " + err.Error())
-		return err
+		log.Println("Got error checking for instance: " + err.Error())
+		return nil
 	}
 
 	log.Println("Finished snapshotting Sia node " + siaNode.Shortcode)
@@ -255,7 +255,7 @@ func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 	var resp api.ConsensusGET
 	if err = client.Get("/consensus", &resp); err != nil {
 		log.Println("Got error checking for consensus: " + err.Error())
-		return err
+		return nil
 	}
 
 	if resp.Synced {
@@ -269,7 +269,32 @@ func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 
 func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeSynchronized: " + siaNode.Shortcode)
-	return nil
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		return err
+	}
+
+	var resp api.WalletInitPOST
+	if err = client.Post("/wallet/init", "{}", &resp); err != nil {
+		log.Println("Got error initializing wallet: " + err.Error())
+		return nil
+	}
+
+	if resp.PrimarySeed == "" {
+		log.Println("Could not initialize wallet")
+		return fmt.Errorf("Could not initialize wallet")
+	}
+
+	_, err = createWalletSeed(siaNode.ID, resp.PrimarySeed)
+	if err != nil {
+		log.Println("Got error saving wallet seed: " + err.Error())
+		return err
+	}
+
+	log.Println("Initialized wallet on Sia node " + siaNode.Shortcode)
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_INITIALIZED)
+	return err
 }
 
 func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
@@ -383,4 +408,48 @@ func updateSiaNodeStatus(id uuid.UUID, status string) (*models.SiaNode, error) {
 		return nil, err
 	}
 	return node.SiaNode, nil
+}
+
+func createWalletSeed(siaNodeID uuid.UUID, words string) (*models.WalletSeed, error) {
+	url := fmt.Sprintf("%s/sianodes/wallet/seed?secret=%s", URLRoot, SiaCDNSecretKey)
+
+	reqBodyData := struct {
+		SiaNodeID uuid.UUID `json:"sia_node_id"`
+		Words     string    `json:"words"`
+	}{SiaNodeID: siaNodeID, Words: words}
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(reqBodyData)
+	if err != nil {
+		log.Println("Could not encode sia wallet seed create json: " + err.Error())
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		log.Println("Could not create request POST " + url)
+		return nil, err
+	}
+
+	res, err := cliClient.Do(req)
+	if err != nil {
+		log.Println("Error making createWalletSeed request: " + err.Error())
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("Could not read createWalletSeed response: " + err.Error())
+		return nil, err
+	}
+
+	var resp struct {
+		WalletSeed *models.WalletSeed `json:"wallet_seed"`
+	}
+	if err = json.Unmarshal(body, &resp); err != nil {
+		log.Println("Could not decode response: " + err.Error())
+		return nil, err
+	}
+	return resp.WalletSeed, nil
 }

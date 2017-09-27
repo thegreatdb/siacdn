@@ -16,9 +16,10 @@ import (
 var ErrNotFound = errors.New("Database object not found")
 
 type Database struct {
-	Accounts   map[uuid.UUID]*models.Account   `json:"accounts"`
-	AuthTokens map[uuid.UUID]*models.AuthToken `json:"auth_tokens"`
-	SiaNodes   map[uuid.UUID]*models.SiaNode   `json:"sianodes"`
+	Accounts    map[uuid.UUID]*models.Account    `json:"accounts"`
+	AuthTokens  map[uuid.UUID]*models.AuthToken  `json:"auth_tokens"`
+	SiaNodes    map[uuid.UUID]*models.SiaNode    `json:"sianodes"`
+	WalletSeeds map[uuid.UUID]*models.WalletSeed `json:"wallet_seeds"`
 
 	filepath string
 	mu       *sync.RWMutex
@@ -33,6 +34,9 @@ func (db *Database) EnsureDefaults(filepath string) {
 	}
 	if db.SiaNodes == nil {
 		db.SiaNodes = map[uuid.UUID]*models.SiaNode{}
+	}
+	if db.WalletSeeds == nil {
+		db.WalletSeeds = map[uuid.UUID]*models.WalletSeed{}
 	}
 	if filepath != "" && db.filepath != filepath {
 		db.filepath = filepath

@@ -55,6 +55,7 @@ func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r.POST("/auth", s.handleCreateAuthToken)
 	r.POST("/sianodes", s.handleCreateSiaNode)
 	r.POST("/sianodes/status", s.handleUpdateSiaNodeStatus)
+	r.POST("/sianodes/wallet/seed", s.handleCreateWalletSeed)
 	r.GET("/sianodes/pending", s.handleGetPendingSiaNode)
 	r.GET("/sianodes/pending/all", s.handleGetPendingSiaNodes)
 	r.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
