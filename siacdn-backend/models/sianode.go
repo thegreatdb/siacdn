@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,4 +54,20 @@ func (sn *SiaNode) Pending() bool {
 		return false
 	}
 	return true
+}
+
+func (sn *SiaNode) KubeNameApp() string {
+	return fmt.Sprintf("sia-%s", sn.Shortcode)
+}
+
+func (sn *SiaNode) KubeNameDep() string {
+	return fmt.Sprintf("sia-%s", sn.Shortcode)
+}
+
+func (sn *SiaNode) KubeNameVol() string {
+	return fmt.Sprintf("sia-%s", sn.Shortcode)
+}
+
+func (sn *SiaNode) KubeNameSer() string {
+	return fmt.Sprintf("sia-%s", sn.Shortcode)
 }
