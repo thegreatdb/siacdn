@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -63,7 +64,7 @@ func kubeCommand(c *urfavecli.Context) error {
 }
 
 func getPendingSiaNodes() ([]*models.SiaNode, error) {
-	url := "http://localhost:9095/sianodes/pending/all?secret=" + SiaCDNSecretKey
+	url := fmt.Sprintf("%s/sianodes/pending/all?secret=%s", URLRoot, SiaCDNSecretKey)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -71,8 +72,7 @@ func getPendingSiaNodes() ([]*models.SiaNode, error) {
 		return nil, err
 	}
 
-	client := http.Client{Timeout: time.Second * 6}
-	res, err := client.Do(req)
+	res, err := cliClient.Do(req)
 	if err != nil {
 		log.Println("Error making GetPendingSiaNodes request: " + err.Error())
 		return nil, err
