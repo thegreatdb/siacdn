@@ -6,6 +6,12 @@ import (
 	urfavecli "github.com/urfave/cli"
 )
 
+var SiaCDNSecretKey string
+
+func init() {
+	SiaCDNSecretKey = os.Getenv("SIACDN_SECRET_KEY")
+}
+
 func RunSiaCDNCLIApp() {
 	// Create and run the app
 	app := urfavecli.NewApp()

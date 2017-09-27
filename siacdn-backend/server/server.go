@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
@@ -13,6 +14,11 @@ import (
 )
 
 var ErrNotImplemented error = errors.New("Endpoint has not yet been implemented")
+var SiaCDNSecretKey string
+
+func init() {
+	SiaCDNSecretKey = os.Getenv("SIACDN_SECRET_KEY")
+}
 
 type HTTPDServer struct {
 	mux http.Handler
@@ -49,6 +55,7 @@ func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r.POST("/auth", s.handleCreateAuthToken)
 	r.POST("/sianodes", s.handleCreateSiaNode)
 	r.GET("/sianodes/orphaned", s.handleGetOrphanedSiaNode)
+	r.GET("/sianodes/orphaned/all", s.handleGetOrphanedSiaNodes)
 	r.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.JsonErr(w, "Not found")
 	})

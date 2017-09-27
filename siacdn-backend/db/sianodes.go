@@ -43,3 +43,15 @@ func (db *Database) GetOrphanedSiaNode(accountID uuid.UUID) (*models.SiaNode, er
 	}
 	return nil, ErrNotFound
 }
+
+func (db *Database) GetOrphanedSiaNodes() ([]*models.SiaNode, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	nodes := []*models.SiaNode{}
+	for _, sn := range db.SiaNodes {
+		if sn.Pending() {
+			nodes = append(nodes, sn)
+		}
+	}
+	return nodes, nil
+}
