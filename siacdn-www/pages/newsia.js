@@ -32,6 +32,21 @@ const siaCostOptions = [
   { key: 50, text: '50TB - $60/mo', value: '50' },
 ];
 
+const displayStatus = {
+  created: 'Sending specifications to the deployment server...',
+  deployed: 'Waiting for resources from deployment server...',
+  instanced: 'Initialized and snapshotting...',
+  snapshotted: 'Finished snapshotting, downloading latest blockchain updates...',
+  synchronized: 'Initializing wallet...',
+  initialized: 'Transferring funds based on your requested capacity...',
+  funded: 'Setting allowance...',
+  configured: 'Waiting for contracts to finalize...',
+  ready: 'Sia node is up and running!',
+  stopped: 'Stopped.',
+  depleted: 'Insufficient funds to continue.',
+  error: 'Errored.'
+};
+
 export default class NewSia extends React.Component {
   state = {
     selectedCost: -1,
@@ -131,8 +146,8 @@ export default class NewSia extends React.Component {
               <Message info>
                 <Message.Header>Setting it up</Message.Header>
                 <Message.Content>
-                  Setting up your Sia full node...<br />
-                  Current Status: {siaNode.status}
+                  Setting up your Sia full node<br />
+                  Current Status: <strong>{displayStatus[siaNode.status]}</strong>
                 </Message.Content>
               </Message>
             ) : (
