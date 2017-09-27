@@ -36,7 +36,8 @@ const displayStatus = {
   created: 'Sending specifications to the deployment server...',
   deployed: 'Waiting for resources from deployment server...',
   instanced: 'Initialized and snapshotting...',
-  snapshotted: 'Finished snapshotting, downloading latest blockchain updates...',
+  snapshotted:
+    'Finished snapshotting, downloading latest blockchain updates...',
   synchronized: 'Initializing wallet...',
   initialized: 'Transferring funds based on your requested capacity...',
   funded: 'Setting allowance...',
@@ -44,7 +45,7 @@ const displayStatus = {
   ready: 'Sia node is up and running!',
   stopped: 'Stopped.',
   depleted: 'Insufficient funds to continue.',
-  error: 'Errored.'
+  error: 'Errored.',
 };
 
 export default class NewSia extends React.Component {
@@ -98,6 +99,38 @@ export default class NewSia extends React.Component {
     }
   };
 
+  checkSia = async () => {
+    let { siaNode } = this.state;
+    const { authTokenID } = this.props;
+
+    if (siaNode && siaNode.state == 'ready') {
+      console.log('Found ready sia node, shutting down Sia check');
+      return;
+    }
+
+    await this.setState({ siaError: null });
+    try {
+      siaNode = await new Client(authTokenID).getOrphanedSiaNode();
+    } catch (error) {
+      await this.setState({ siaError: error });
+      return;
+    }
+    await this.setState({ siaNode });
+
+    this.timer = setTimeout(() => this.checkSia(), 1000);
+  };
+
+  componentDidMount = () => {
+    this.timer = setTimeout(() => this.checkSia(), 0);
+  };
+
+  componentWillUnmount = () => {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+  };
+
   render() {
     const { authAccount } = this.props;
     const { selectedCost, siaSubmitting, siaError } = this.state;
@@ -147,7 +180,8 @@ export default class NewSia extends React.Component {
                 <Message.Header>Setting it up</Message.Header>
                 <Message.Content>
                   Setting up your Sia full node<br />
-                  Current Status: <strong>{displayStatus[siaNode.status]}</strong>
+                  Current Status:{' '}
+                  <strong>{displayStatus[siaNode.status]}</strong>
                 </Message.Content>
               </Message>
             ) : (
