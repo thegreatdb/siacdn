@@ -19,6 +19,7 @@ func RunSiaCDNCLIApp() {
 	app.Usage = "Management binary for the SiaCDN backend"
 	app.Commands = []urfavecli.Command{
 		ServeCommand(),
+		KubeCommand(),
 	}
 	app.Run(os.Args)
 }
