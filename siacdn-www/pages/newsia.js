@@ -68,8 +68,8 @@ export default class NewSia extends React.Component {
     } catch (err) {
       redirect(ctx, '/signup');
     }
-    const orphanedSiaNode = await client.getOrphanedSiaNode();
-    return { authTokenID, authAccount, orphanedSiaNode };
+    const pendingSiaNode = await client.getPendingSiaNode();
+    return { authTokenID, authAccount, pendingSiaNode };
   }
 
   handleSiaCapacityChange = async (ev, data) => {
@@ -110,7 +110,7 @@ export default class NewSia extends React.Component {
 
     await this.setState({ siaError: null });
     try {
-      siaNode = await new Client(authTokenID).getOrphanedSiaNode();
+      siaNode = await new Client(authTokenID).getPendingSiaNode();
     } catch (error) {
       await this.setState({ siaError: error });
       return;
@@ -135,7 +135,7 @@ export default class NewSia extends React.Component {
     const { authAccount } = this.props;
     const { selectedCost, siaSubmitting, siaError } = this.state;
     const hasSiaError = Boolean(siaError);
-    const siaNode = this.state.siaNode || this.props.orphanedSiaNode;
+    const siaNode = this.state.siaNode || this.props.pendingSiaNode;
     return (
       <div>
         <Head>

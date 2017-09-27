@@ -45,8 +45,8 @@ export default class Client {
     return resp.sianode;
   }
 
-  async getOrphanedSiaNode() {
-    const resp = await this.get('/sianodes/orphaned');
+  async getPendingSiaNode() {
+    const resp = await this.get('/sianodes/pending');
     return resp.sianode;
   }
 

@@ -7,7 +7,7 @@ import (
 	"github.com/thegreatdb/siacdn/siacdn-backend/db"
 )
 
-func (s *HTTPDServer) handleGetOrphanedSiaNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (s *HTTPDServer) handleGetPendingSiaNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	req := NewRequest(r, s.db)
 	account, err := req.GetAccount()
 	if err != nil && err != db.ErrNotFound {
@@ -18,9 +18,9 @@ func (s *HTTPDServer) handleGetOrphanedSiaNode(w http.ResponseWriter, r *http.Re
 		s.JsonErr(w, "You must be authenticated to access this resource")
 		return
 	}
-	sn, err := s.db.GetOrphanedSiaNode(account.ID)
+	sn, err := s.db.GetPendingSiaNode(account.ID)
 	if err != nil && err != db.ErrNotFound {
-		s.JsonErr(w, "Could not get orphaned sia node: "+err.Error())
+		s.JsonErr(w, "Could not get pending sia node: "+err.Error())
 		return
 	}
 	s.Json(w, map[string]interface{}{"sianode": sn})
