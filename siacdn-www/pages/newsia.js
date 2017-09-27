@@ -179,7 +179,7 @@ export default class NewSia extends React.Component {
               <Message info>
                 <Message.Header>Setting it up</Message.Header>
                 <Message.Content>
-                  Setting up your Sia full node<br />
+                  Spinning up your Sia full node<br />
                   Name: {siaNode.shortcode}<br />
                   Current Status:{' '}
                   <strong>{displayStatus[siaNode.status]}</strong>
