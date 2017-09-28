@@ -33,5 +33,4 @@ if [ ! -d consensus ]; then
   cd ..
 fi
 
-export SIA_API_PASSWORD=asdf
 siad -d /sia --authenticate-api --disable-api-security --api-addr :9980
