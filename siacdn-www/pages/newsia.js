@@ -33,15 +33,19 @@ const siaCostOptions = [
 ];
 
 const displayStatus = {
-  created: 'Sending specifications to the deployment server...',
-  deployed: 'Waiting for resources from deployment server...',
-  instanced: 'Initialized and snapshotting...',
+  created: '2) Sending specifications to the deployment server...',
+  deployed: '3) Waiting for resources from deployment server...',
+  instanced: '4) Initialized and snapshotting...',
   snapshotted:
-    'Finished snapshotting, downloading latest blockchain updates...',
-  synchronized: 'Initializing wallet...',
-  initialized: 'Transferring funds to your Sia node based on requested capacity...',
-  funded: 'Setting allowance...',
-  configured: 'Waiting for contracts to finalize...',
+    '5) Finished snapshotting, downloading latest blockchain updates...',
+  synchronized: '6) Initializing wallet...',
+  initialized:
+    '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take quite while...',
+  unlocked:
+    '8) Transferring funds to your Sia node based on requested capacity...',
+  funded: '9) Setting allowance...',
+  configured:
+    '10) Waiting for contracts to finalize. This can take quite a while too...',
   ready: 'Sia node is up and running!',
   stopped: 'Stopped.',
   depleted: 'Insufficient funds to continue.',
@@ -180,7 +184,8 @@ export default class NewSia extends React.Component {
                 <Message.Header>Setting it up</Message.Header>
                 <Message.Content>
                   Spinning up your Sia full node<br />
-                  Name: {siaNode.shortcode}<br />
+                  Name: {siaNode.shortcode}
+                  <br />
                   Current Status:{' '}
                   <strong>{displayStatus[siaNode.status]}</strong>
                 </Message.Content>

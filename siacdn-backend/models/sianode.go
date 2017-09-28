@@ -20,6 +20,7 @@ const SIANODE_STATUS_INSTANCED = "instanced"       // Pod instance has been seen
 const SIANODE_STATUS_SNAPSHOTTED = "snapshotted"   // Bootstrap snapshot script has finished
 const SIANODE_STATUS_SYNCHRONIZED = "synchronized" // Blockchain has synchronized
 const SIANODE_STATUS_INITIALIZED = "initialized"   // Wallet has been initialized
+const SIANODE_STATUS_UNLOCKED = "unlocked"         // Wallet has been unlocked
 const SIANODE_STATUS_FUNDED = "funded"             // Account has received initial funding
 const SIANODE_STATUS_CONFIGURED = "configured"     // Allowance has been set
 const SIANODE_STATUS_READY = "ready"               // Everything is ready to go and contracts are all set
@@ -93,6 +94,7 @@ func (sn *SiaNode) ValidateStatus() error {
 		SIANODE_STATUS_SNAPSHOTTED,
 		SIANODE_STATUS_SYNCHRONIZED,
 		SIANODE_STATUS_INITIALIZED,
+		SIANODE_STATUS_UNLOCKED,
 		SIANODE_STATUS_FUNDED,
 		SIANODE_STATUS_CONFIGURED,
 		SIANODE_STATUS_READY,

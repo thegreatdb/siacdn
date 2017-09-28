@@ -25,7 +25,9 @@ import (
 
 const kubeNamespace = "sia"
 
-var kubeDefaultStorage = resource.MustParse("100Gi")
+//var kubeStorageClass = "standard"
+var kubeStorageClass = "fast"
+var kubeDefaultStorage = resource.MustParse("30Gi")
 
 func KubeCommand() urfavecli.Command {
 	return urfavecli.Command{
@@ -74,6 +76,8 @@ func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 		return pollKubeSynchronized(clientset, siaNode)
 	case models.SIANODE_STATUS_INITIALIZED:
 		return pollKubeInitialized(clientset, siaNode)
+	case models.SIANODE_STATUS_UNLOCKED:
+		return pollKubeUnlocked(clientset, siaNode)
 	case models.SIANODE_STATUS_FUNDED:
 		return pollKubeFunded(clientset, siaNode)
 	case models.SIANODE_STATUS_CONFIGURED:
@@ -100,15 +104,14 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 	// If it doesn't exist, create it
 	if claim == nil || errors.IsNotFound(err) {
 		spec := v1.PersistentVolumeClaimSpec{
-			AccessModes: []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
+			StorageClassName: &kubeStorageClass,
+			AccessModes:      []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
 			Resources: v1.ResourceRequirements{
 				Requests: v1.ResourceList{
 					v1.ResourceName("storage"): kubeDefaultStorage,
 				},
 			},
 		}
-		storageClass := "standard"
-		spec.StorageClassName = &storageClass
 
 		claim = &v1.PersistentVolumeClaim{}
 		claim.Name = siaNode.KubeNameVol()
@@ -299,6 +302,63 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 
 func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInitialized: " + siaNode.Shortcode)
+
+	seed, err := getWalletSeed(siaNode.ID)
+	if err != nil {
+		return err
+	}
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		return err
+	}
+
+	log.Println("Unlocking wallet " + siaNode.Shortcode)
+	req := fmt.Sprintf("{\"encryptionpassword\":\"%s\"}", seed.Words)
+	var resp struct {
+		Message string `json:"message"`
+	}
+	if err = client.Post("/wallet/init", req, &resp); err != nil {
+		log.Println("Got error initializing wallet: " + err.Error())
+		return nil
+	}
+
+	log.Println(fmt.Sprintf("Got response: %s", resp.Message))
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_UNLOCKED)
+	return err
+	/*
+
+
+		//req := fmt.Sprintf("{\"encryptionpassword\":\"%s\"}", siaNode.)
+
+		var resp struct {
+			EncryptionPassword string `json:"encryptionpassword"`
+		}
+		if err = client.Post("/wallet/init", "{}", &resp); err != nil {
+			log.Println("Got error initializing wallet: " + err.Error())
+			return nil
+		}
+
+		if resp.PrimarySeed == "" {
+			log.Println("Could not initialize wallet")
+			return fmt.Errorf("Could not initialize wallet")
+		}
+
+		_, err = createWalletSeed(siaNode.ID, resp.PrimarySeed)
+		if err != nil {
+			log.Println("Got error saving wallet seed: " + err.Error())
+			return err
+		}
+
+		log.Println("Initialized wallet on Sia node " + siaNode.Shortcode)
+		_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_INITIALIZED)
+		return err
+	*/
+	return nil
+}
+
+func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
+	log.Println("PollKubeInitialized: " + siaNode.Shortcode)
 	return nil
 }
 
@@ -452,4 +512,40 @@ func createWalletSeed(siaNodeID uuid.UUID, words string) (*models.WalletSeed, er
 		return nil, err
 	}
 	return resp.WalletSeed, nil
+}
+
+func getWalletSeed(siaNodeID uuid.UUID) (*models.WalletSeed, error) {
+	url := fmt.Sprintf("%s/wallets/%s/seed?secret=%s",
+		URLRoot, siaNodeID.String(), SiaCDNSecretKey)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Println("Could not create request GET " + url)
+		return nil, err
+	}
+
+	res, err := cliClient.Do(req)
+	if err != nil {
+		log.Println("Error making getWalletSeed request: " + err.Error())
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("Could not read getWalletSeed response: " + err.Error())
+		return nil, err
+	}
+
+	log.Println("RESP: " + string(body))
+
+	var resp struct {
+		Seed *models.WalletSeed `json:"wallet_seed"`
+	}
+	if err = json.Unmarshal(body, &resp); err != nil {
+		log.Println("Could not decode response: " + err.Error())
+		return nil, err
+	}
+
+	return resp.Seed, nil
 }

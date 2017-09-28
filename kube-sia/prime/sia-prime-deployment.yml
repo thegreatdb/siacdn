@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sia-prime-deployment
+  namespace: sia
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sia-prime
+    spec:
+      volumes:
+        - name: sia-volume
+          persistentVolumeClaim:
+            claimName: sia-prime-volume-claim
+      containers:
+        - name: sia-docker
+          image: gcr.io/gradientzoo-1233/sia-docker:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9980
+            - containerPort: 9981
+            - containerPort: 9982
+          volumeMounts:
+            - mountPath: "/sia"
+              name: sia-volume
+          env:
+            - name: SIA_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: siaapipassword

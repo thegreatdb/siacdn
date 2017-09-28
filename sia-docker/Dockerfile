@@ -7,9 +7,9 @@ RUN \
   apk add git ca-certificates curl openssl && \
   update-ca-certificates
 
-ENV SIA_COMMIT 74896a42aa656afba973fc70d062183b9211ce8b
+ENV SIA_COMMIT b07148b60297f705495dae84e5e9de2fe889fb39
 
-RUN go get -u github.com/NebulousLabs/Sia/...
+RUN go get -u github.com/ericflo/Sia/...
 
 EXPOSE 9980 9981 9982
 
