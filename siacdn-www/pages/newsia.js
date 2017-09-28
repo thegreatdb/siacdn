@@ -35,17 +35,17 @@ const siaCostOptions = [
 const displayStatus = {
   created: '2) Sending specifications to the deployment server...',
   deployed: '3) Waiting for resources from deployment server...',
-  instanced: '4) Initialized and snapshotting...',
+  instanced: '4) Initialized Sia node, now downloading a recent blockchain snapshot...',
   snapshotted:
-    '5) Finished snapshotting, downloading latest blockchain updates...',
-  synchronized: '6) Initializing wallet...',
+    '5) Finished snapshotting, now downloading the latest blockchain updates...',
+  synchronized: '6) Blockchain fully synced. Initializing wallet...',
   initialized:
-    '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take quite a while...',
+    '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take up to 20 minutes...',
   unlocked:
     '8) Transferring funds to your Sia node based on requested capacity...',
   funded: '9) Setting allowance...',
   configured:
-    '10) Waiting for contracts to finalize. This can take quite a while too...',
+    '10) Waiting for contracts to finalize. This can take up to an hour (Sia team working to improve this)...',
   ready: 'Sia node is up and running!',
   stopped: 'Stopped.',
   depleted: 'Insufficient funds to continue.',

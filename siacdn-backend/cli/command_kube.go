@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/NebulousLabs/Sia/api"
@@ -29,6 +30,21 @@ const kubeNamespace = "sia"
 //var kubeStorageClass = "standard"
 var kubeStorageClass = "fast"
 var kubeDefaultStorage = resource.MustParse("30Gi")
+
+var kubeMu sync.Mutex
+var kubeInFlight map[uuid.UUID]bool = map[uuid.UUID]bool{}
+
+func StartFlight(siaNode *models.SiaNode) {
+	kubeMu.Lock()
+	kubeInFlight[siaNode.ID] = true
+	kubeMu.Unlock()
+}
+
+func StopFlight(siaNode *models.SiaNode) {
+	kubeMu.Lock()
+	delete(kubeInFlight, siaNode.ID)
+	kubeMu.Unlock()
+}
 
 func KubeCommand() urfavecli.Command {
 	return urfavecli.Command{
@@ -64,25 +80,33 @@ func PerformKubeRun(clientset *kubernetes.Clientset) error {
 }
 
 func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
+	kubeMu.Lock()
+	_, inFlight := kubeInFlight[siaNode.ID]
+	kubeMu.Unlock()
+	if inFlight {
+		log.Println("Skipping " + siaNode.ID.String() + " because it is in-flight")
+		return nil
+	}
+	// TODO: Also check length and skip if kubeInFlight has more than 10 going too
 	switch siaNode.Status {
 	case models.SIANODE_STATUS_CREATED:
-		return pollKubeCreated(clientset, siaNode)
+		go pollKubeCreated(clientset, siaNode)
 	case models.SIANODE_STATUS_DEPLOYED:
-		return pollKubeDeployed(clientset, siaNode)
+		go pollKubeDeployed(clientset, siaNode)
 	case models.SIANODE_STATUS_INSTANCED:
-		return pollKubeInstanced(clientset, siaNode)
+		go pollKubeInstanced(clientset, siaNode)
 	case models.SIANODE_STATUS_SNAPSHOTTED:
-		return pollKubeSnapshotted(clientset, siaNode)
+		go pollKubeSnapshotted(clientset, siaNode)
 	case models.SIANODE_STATUS_SYNCHRONIZED:
-		return pollKubeSynchronized(clientset, siaNode)
+		go pollKubeSynchronized(clientset, siaNode)
 	case models.SIANODE_STATUS_INITIALIZED:
-		return pollKubeInitialized(clientset, siaNode)
+		go pollKubeInitialized(clientset, siaNode)
 	case models.SIANODE_STATUS_UNLOCKED:
-		return pollKubeUnlocked(clientset, siaNode)
+		go pollKubeUnlocked(clientset, siaNode)
 	case models.SIANODE_STATUS_FUNDED:
-		return pollKubeFunded(clientset, siaNode)
+		go pollKubeFunded(clientset, siaNode)
 	case models.SIANODE_STATUS_CONFIGURED:
-		return pollKubeConfigured(clientset, siaNode)
+		go pollKubeConfigured(clientset, siaNode)
 	default:
 		log.Println("Unknown status: " + siaNode.Status)
 	}
@@ -91,6 +115,8 @@ func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 
 func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeCreated: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
@@ -231,6 +257,8 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 
 func pollKubeDeployed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeDeployed: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 	pod, _ := getPod(clientset, siaNode)
 	if pod == nil || pod.Name == "" {
 		return nil
@@ -242,6 +270,8 @@ func pollKubeDeployed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 
 func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInstanced: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -263,6 +293,8 @@ func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode)
 
 func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeSnapshotted: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -286,6 +318,8 @@ func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 
 func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeSynchronized: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -316,6 +350,8 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 
 func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInitialized: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 
 	seed, err := getWalletSeed(siaNode.ID)
 	if err != nil {
@@ -380,16 +416,22 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 
 func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInitialized: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 	return nil
 }
 
 func pollKubeFunded(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeFunded: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 	return nil
 }
 
 func pollKubeConfigured(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeConfigured: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
 	return nil
 }
 
