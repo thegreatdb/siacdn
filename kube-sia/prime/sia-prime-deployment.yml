@@ -31,3 +31,8 @@ spec:
                 secretKeyRef:
                   name: sia-secret
                   key: siaapipassword
+            - name: SIA_WALLET_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: siawalletpassword

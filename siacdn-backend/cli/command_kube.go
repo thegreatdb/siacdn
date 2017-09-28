@@ -415,7 +415,7 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 }
 
 func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
-	log.Println("PollKubeInitialized: " + siaNode.Shortcode)
+	log.Println("PollKubeUnlocked: " + siaNode.Shortcode)
 	StartFlight(siaNode)
 	defer StopFlight(siaNode)
 	return nil
