@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/NebulousLabs/Sia/api"
@@ -198,6 +199,19 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 					VolumeMounts: []v1.VolumeMount{
 						v1.VolumeMount{Name: "sia-volume", MountPath: "/sia"},
 					},
+					Env: []v1.EnvVar{
+						v1.EnvVar{
+							Name: "SIA_API_PASSWORD",
+							ValueFrom: &v1.EnvVarSource{
+								SecretKeyRef: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: "sia-secret",
+									},
+									Key: "siaapipassword",
+								},
+							},
+						},
+					},
 				},
 			},
 		}
@@ -279,7 +293,7 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 	}
 
 	var resp api.WalletInitPOST
-	if err = client.Post("/wallet/init", "{}", &resp); err != nil {
+	if err = client.Post("/wallet/init", "", &resp); err != nil {
 		log.Println("Got error initializing wallet: " + err.Error())
 		return nil
 	}
@@ -307,6 +321,9 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 	if err != nil {
 		return err
 	}
+	if seed == nil {
+		return fmt.Errorf("Could get wallet seed for unlock")
+	}
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -314,12 +331,17 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 	}
 
 	log.Println("Unlocking wallet " + siaNode.Shortcode)
-	req := fmt.Sprintf("{\"encryptionpassword\":\"%s\"}", seed.Words)
+	if err != nil {
+		log.Println("Got error encoding password: " + err.Error())
+		return nil
+	}
+	vals := url.Values{}
+	vals.Set("encryptionpassword", seed.Words)
 	var resp struct {
 		Message string `json:"message"`
 	}
-	if err = client.Post("/wallet/init", req, &resp); err != nil {
-		log.Println("Got error initializing wallet: " + err.Error())
+	if err = client.Post("/wallet/unlock", vals.Encode(), &resp); err != nil {
+		log.Println("Got error unlocking wallet: " + err.Error())
 		return nil
 	}
 
@@ -354,7 +376,6 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 		_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_INITIALIZED)
 		return err
 	*/
-	return nil
 }
 
 func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
@@ -393,7 +414,6 @@ func getPod(clientset *kubernetes.Clientset, siaNode *models.SiaNode) (*v1.Pod, 
 // Administrative API Calls
 
 func getPendingSiaNodes() ([]*models.SiaNode, error) {
-	log.Println("getPendingSiaNodes()")
 	url := fmt.Sprintf("%s/sianodes/pending/all?secret=%s", URLRoot, SiaCDNSecretKey)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -471,12 +491,11 @@ func updateSiaNodeStatus(id uuid.UUID, status string) (*models.SiaNode, error) {
 }
 
 func createWalletSeed(siaNodeID uuid.UUID, words string) (*models.WalletSeed, error) {
-	url := fmt.Sprintf("%s/sianodes/wallet/seed?secret=%s", URLRoot, SiaCDNSecretKey)
+	url := fmt.Sprintf("%s/wallets/%s/seed?secret=%s", URLRoot, siaNodeID, SiaCDNSecretKey)
 
 	reqBodyData := struct {
-		SiaNodeID uuid.UUID `json:"sia_node_id"`
-		Words     string    `json:"words"`
-	}{SiaNodeID: siaNodeID, Words: words}
+		Words string `json:"words"`
+	}{Words: words}
 
 	buf := &bytes.Buffer{}
 	err := json.NewEncoder(buf).Encode(reqBodyData)
@@ -536,8 +555,6 @@ func getWalletSeed(siaNodeID uuid.UUID) (*models.WalletSeed, error) {
 		log.Println("Could not read getWalletSeed response: " + err.Error())
 		return nil, err
 	}
-
-	log.Println("RESP: " + string(body))
 
 	var resp struct {
 		Seed *models.WalletSeed `json:"wallet_seed"`

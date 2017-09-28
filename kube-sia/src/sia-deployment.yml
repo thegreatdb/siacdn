@@ -25,6 +25,12 @@ spec:
           volumeMounts:
             - mountPath: "/sia"
               name: sia-volume
+          env:
+            - name: SIA_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: siaapipassword
         - name: sia-docker-backup-periodic
           image: gcr.io/gradientzoo-1233/sia-docker:latest
           imagePullPolicy: Always
@@ -48,3 +54,8 @@ spec:
                 secretKeyRef:
                   name: sia-secret
                   key: miniosecretkey
+            - name: SIA_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: siaapipassword

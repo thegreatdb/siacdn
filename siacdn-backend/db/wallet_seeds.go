@@ -5,10 +5,10 @@ import (
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
 )
 
-func (db *Database) GetWalletSeed(siaNodeID uuid.UUID) (*models.Account, error) {
+func (db *Database) GetWalletSeed(siaNodeID uuid.UUID) (*models.WalletSeed, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	if seed, ok := db.Accounts[siaNodeID]; ok {
+	if seed, ok := db.WalletSeeds[siaNodeID]; ok {
 		return seed.Copy(), nil
 	} else {
 		return nil, ErrNotFound

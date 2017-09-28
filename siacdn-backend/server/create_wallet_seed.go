@@ -11,13 +11,18 @@ import (
 )
 
 type createWalletSeedForm struct {
-	SiaNodeID uuid.UUID `json:"sia_node_id"`
-	Words     string    `json:"words"`
+	Words string `json:"words"`
 }
 
 func (s *HTTPDServer) handleCreateWalletSeed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.URL.Query().Get("secret") != SiaCDNSecretKey {
 		s.JsonErr(w, "Secret key must match")
+		return
+	}
+	siaNodeIDStr := ps.ByName("id")
+	siaNodeID, err := uuid.Parse(siaNodeIDStr)
+	if err != nil {
+		s.JsonErr(w, "Invalid node ID: "+err.Error())
 		return
 	}
 
@@ -37,7 +42,7 @@ func (s *HTTPDServer) handleCreateWalletSeed(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	seed, err := models.NewWalletSeed(form.SiaNodeID, form.Words)
+	seed, err := models.NewWalletSeed(siaNodeID, form.Words)
 	if err != nil {
 		s.JsonErr(w, "Could not create wallet seed: "+err.Error())
 		return

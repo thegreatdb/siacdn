@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/NebulousLabs/Sia/api"
@@ -82,7 +83,7 @@ func (sn *SiaNode) SiaClient() (*api.Client, error) {
 	} else {
 		ip = service.Spec.ClusterIP
 	}
-	client := api.NewClient(ip+":9980", "")
+	client := api.NewClient(ip+":9980", os.Getenv("SIA_API_PASSWORD"))
 	return client, nil
 }
 

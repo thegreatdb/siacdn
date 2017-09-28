@@ -40,7 +40,7 @@ const displayStatus = {
     '5) Finished snapshotting, downloading latest blockchain updates...',
   synchronized: '6) Initializing wallet...',
   initialized:
-    '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take quite while...',
+    '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take quite a while...',
   unlocked:
     '8) Transferring funds to your Sia node based on requested capacity...',
   funded: '9) Setting allowance...',
