@@ -7,7 +7,7 @@ RUN \
   apk add git ca-certificates curl openssl && \
   update-ca-certificates
 
-ENV SIA_COMMIT b07148b60297f705495dae84e5e9de2fe889fb39
+ENV SIA_COMMIT 3c012755d14debc01bc0930143fb3cafc6a764ee
 
 RUN go get -u github.com/ericflo/Sia/...
 
