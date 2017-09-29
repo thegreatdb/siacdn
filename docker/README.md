@@ -1,4 +1,4 @@
-# sia-docker
+# siacdn-docker
 
 This is a Dockerized version of Sia, with scripts and tools used in SiaCDN.
 
