@@ -41,7 +41,7 @@ func (s *HTTPDServer) handleCreateSiaNode(w http.ResponseWriter, r *http.Request
 		s.JsonErr(w, "Could not decode JSON: "+err.Error())
 		return
 	}
-	if form.Capacity < 5 || form.Capacity > 50 {
+	if form.Capacity < 0.02 || form.Capacity > 50 {
 		s.JsonErr(w, "Invalid capacity")
 		return
 	}

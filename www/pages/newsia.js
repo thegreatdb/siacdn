@@ -20,6 +20,7 @@ import redirect from '../lib/redirect';
 import Client from '../lib/client';
 
 const siaCostOptions = [
+  { key: 0.02, text: ' 50GB - $0.024/mo', value: '0.02' },
   { key: 5, text: ' 5TB - $6/mo', value: '5' },
   { key: 10, text: '10TB - $12/mo', value: '10' },
   { key: 15, text: '15TB - $18/mo', value: '15' },

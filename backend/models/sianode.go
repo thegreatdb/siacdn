@@ -14,8 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//const siaPerTB = 210.39 // https://siastats.info/storage_pricing.html
-const siaPerTB = 2.1 // Just for testing
+const siaPerTB = 210.39 // https://siastats.info/storage_pricing.html
+//const siaPerTB = 2.1 // Just for testing
 const slopMultiple = 1.05
 const numTerms = 1.2
 const kubeNamespace = "sia"
