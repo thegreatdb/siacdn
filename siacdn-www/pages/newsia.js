@@ -46,7 +46,7 @@ const displayStatus = {
   funded: '9) Funds sent. Waiting for confirmation that funds were received...',
   confirmed: '10) Funding confirmed. Setting storage contract allowance now...',
   configured:
-    '11) Negotiating storage contracts on your behalf. This can take up to an hour (Sia team working to improve this)...',
+    '11) Negotiating storage contracts on your behalf. This can take a while (Sia team working to improve this)...',
   ready: 'Sia node is up and running!',
   stopped: 'Stopped.',
   depleted: 'Insufficient funds to continue.',
