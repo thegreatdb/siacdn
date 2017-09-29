@@ -33,6 +33,10 @@ const siaCostOptions = [
   { key: 50, text: '50TB - $60/mo', value: '50' },
 ];
 
+const minioCountOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(i => (
+  { key: i, text:  ' ' + i + ' Sia-Enabled Minio Instance' + (i == 1 ? '' : 's') + ' - $' + (i * 10) + '/mo', value: '' + i }
+));
+
 const displayStatus = {
   created: '2) Sending specifications to the deployment server...',
   deployed: '3) Waiting for resources from deployment server...',
@@ -57,8 +61,11 @@ const displayStatus = {
 export default class NewSia extends React.Component {
   state = {
     selectedCost: -1,
+    selectedCount: 0,
     siaError: null,
     siaSubmitting: false,
+    minioError: null,
+    minioSubmitting: false,
     siaNode: null,
   };
 
@@ -80,6 +87,10 @@ export default class NewSia extends React.Component {
 
   handleSiaCapacityChange = async (ev, data) => {
     await this.setState({ selectedCost: data.value });
+  };
+
+  handleMinioCountChange = async (ev, data) => {
+    await this.setState({ selectedCount: data.value - 1 });
   };
 
   handleSiaSubmit = async ev => {
@@ -105,16 +116,38 @@ export default class NewSia extends React.Component {
     }
   };
 
+  handleMinioSubmit = async ev => {
+    ev.preventDefault();
+
+    const { authTokenID } = this.props;
+    const { selectedCount } = this.state;
+    let siaNode = this.state.siaNode || this.props.orphanedSiaNode;
+
+    await this.setState({ minioError: null, minioSubmitting: true });
+    try {
+      const client = new Client(authTokenID);
+      siaNode = await client.updateSiaNodeInstances(
+        siaNode.id,
+        minioCountOptions[selectedCount].key
+      );
+      await this.setState({ minioSubmitting: false, siaNode: siaNode });
+    } catch (error) {
+      await this.setState({ minioError: error, minioSubmitting: false });
+    }
+  };
+
   checkSia = async () => {
     let { siaNode } = this.state;
     const { authTokenID } = this.props;
 
-    if (siaNode && siaNode.state == 'ready') {
+    /*
+    if (siaNode && siaNode.state === 'ready') {
       console.log('Found ready sia node, shutting down Sia check');
       return;
     }
+    */
 
-    await this.setState({ siaError: null });
+    //await this.setState({ siaError: null });
     try {
       siaNode = await new Client(authTokenID).getOrphanedSiaNode();
     } catch (error) {
@@ -139,8 +172,16 @@ export default class NewSia extends React.Component {
 
   render() {
     const { authAccount } = this.props;
-    const { selectedCost, siaSubmitting, siaError } = this.state;
+    const {
+      selectedCost,
+      selectedCount,
+      siaSubmitting,
+      siaError,
+      minioSubmitting,
+      minioError
+    } = this.state;
     const hasSiaError = Boolean(siaError);
+    const hasMinioError = Boolean(minioError);
     const siaNode = this.state.siaNode || this.props.orphanedSiaNode;
     return (
       <div>
@@ -154,6 +195,7 @@ export default class NewSia extends React.Component {
         </Head>
         <div className="holder">
           <Nav activeItem="newsia" authAccount={authAccount} />
+
           <Segment padded>
             {siaNode ? (
               <Header as="h1">
@@ -163,6 +205,7 @@ export default class NewSia extends React.Component {
               <Header as="h1">Let&rsquo;s start a new Sia full node</Header>
             )}
           </Segment>
+
           <Step.Group ordered fluid size="small">
             <Step
               completed
@@ -179,6 +222,7 @@ export default class NewSia extends React.Component {
               description="Set up Minio instances"
             />
           </Step.Group>
+
           <Segment padded>
             <Header as="h3">Sia Node</Header>
             {siaNode ? (
@@ -217,6 +261,44 @@ export default class NewSia extends React.Component {
               </Form>
             )}
           </Segment>
+
+          <Segment className={siaNode ? '' : 'disabled'} padded>
+            <Header as="h3">Minio Instances</Header>
+            {siaNode ?
+              (siaNode.minio_instances_requested > 0 ?
+                <Message info>
+                  <Message.Header>Setting it up</Message.Header>
+                  <Message.Content>
+                    {siaNode.status === 'ready' ?
+                      'Spinning up your Minio instances...' :
+                      'Waiting for Sia node to finish before spinning up your Minio Instances...'}<br />
+                    Requested Count: {siaNode.minio_instances_requested}
+                  </Message.Content>
+                </Message> :
+                <Form
+                  error={hasMinioError}
+                  loading={minioSubmitting}
+                  onSubmit={this.handleMinioSubmit}
+                >
+                  {hasMinioError ? (
+                    <Message header="Whoops!" content={minioError.message} error />
+                  ) : null}
+                  <Form.Field>
+                    <label>How many Minio instances to launch?</label>
+                    <Form.Select
+                      options={minioCountOptions}
+                      onChange={this.handleMinioCountChange}
+                      selectedValue={selectedCount}
+                      placeholder="Minio instance count"
+                    />
+                  </Form.Field>
+                  <Button>Start Minio instances</Button>
+                </Form>) :
+              <Message header="Waiting..."
+                       content="Waiting for Sia node to start launching."
+                       warn />}
+          </Segment>
+
         </div>
       </div>
     );

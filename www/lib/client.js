@@ -45,6 +45,12 @@ export default class Client {
     return resp.sianode;
   }
 
+  async updateSiaNodeInstances(id, instances) {
+    const body = { minio_instances_requested: instances };
+    const resp = await this.post('/sianodes/id/' + id, null, JSON.stringify(body));
+    return resp.sianode;
+  }
+
   async getOrphanedSiaNode() {
     const resp = await this.get('/sianodes/orphaned');
     return resp.sianode;
