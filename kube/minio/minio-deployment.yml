@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: sia
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+        - name: minio
+          persistentVolumeClaim:
+            claimName: minio
+      containers:
+        - name: minio
+          image: gcr.io/gradientzoo-1233/siacdn-minio:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - mountPath: "/minio"
+              name: minio
+          env:
+            - name: SIA_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sia-secret
+                  key: siaapipassword
+            - name: SIA_DAEMON_ADDR
+              value: siacdn-neh1lh4h.sia.svc.cluster.local:9980
+            - name: SIA_CACHE_MAX_SIZE_BYTES
+              value: "25000000000"
+            - name: SIA_CACHE_PURGE_AFTER_SEC
+              value: "345600"
+            - name: SIA_DEBUG
+              value: "1"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: accesskey
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: secretkey
