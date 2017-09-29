@@ -11,7 +11,7 @@ import (
 )
 
 type createSiaNodeForm struct {
-	Capacity int `json:"capacity"`
+	Capacity float32 `json:"capacity"`
 }
 
 func (s *HTTPDServer) handleCreateSiaNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

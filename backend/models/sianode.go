@@ -39,12 +39,12 @@ type SiaNode struct {
 	ID          uuid.UUID `json:"id"`
 	Shortcode   string    `json:"shortcode"`
 	AccountID   uuid.UUID `json:"account_id"`
-	Capacity    int       `json:"capacity"`
+	Capacity    float32   `json:"capacity"`
 	Status      string    `json:"status"`
 	CreatedTime time.Time `json:"created_time"`
 }
 
-func NewSiaNode(accountID uuid.UUID, capacity int) (*SiaNode, error) {
+func NewSiaNode(accountID uuid.UUID, capacity float32) (*SiaNode, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
@@ -93,15 +93,15 @@ func (sn *SiaNode) SiaClient() (*api.Client, error) {
 }
 
 func (sn *SiaNode) AllowanceCurrency() types.Currency {
-	return types.SiacoinPrecision.MulFloat(siaPerTB).Mul64(uint64(sn.Capacity))
+	return types.SiacoinPrecision.MulFloat(float64(siaPerTB * sn.Capacity))
 }
 
 func (sn *SiaNode) RequestedCurrency() types.Currency {
-	return types.SiacoinPrecision.MulFloat(siaPerTB * numTerms * slopMultiple).Mul64(uint64(sn.Capacity))
+	return types.SiacoinPrecision.MulFloat(float64(siaPerTB * numTerms * slopMultiple * sn.Capacity))
 }
 
 func (sn *SiaNode) DesiredCurrency() types.Currency {
-	return types.SiacoinPrecision.MulFloat(siaPerTB * numTerms).Mul64(uint64(sn.Capacity))
+	return types.SiacoinPrecision.MulFloat(float64(siaPerTB * numTerms * sn.Capacity))
 }
 
 func (sn *SiaNode) ValidateStatus() error {
