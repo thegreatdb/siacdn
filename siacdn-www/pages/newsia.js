@@ -42,10 +42,11 @@ const displayStatus = {
   initialized:
     '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take up to 30 minutes...',
   unlocked:
-    '8) Transferring funds to your Sia node based on requested capacity...',
-  funded: '9) Setting allowance...',
+    '8) Transferring enough funds to your Sia node to meet requested storage capacity...',
+  funded: '9) Funds sent. Waiting for confirmation that funds were received...',
+  confirmed: '10) Funding confirmed. Setting storage contract allowance now...',
   configured:
-    '10) Waiting for contracts to finalize. This can take up to an hour (Sia team working to improve this)...',
+    '11) Negotiating storage contracts. This can take up to an hour (Sia team working to improve this)...',
   ready: 'Sia node is up and running!',
   stopped: 'Stopped.',
   depleted: 'Insufficient funds to continue.',

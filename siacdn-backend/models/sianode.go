@@ -7,12 +7,17 @@ import (
 	"time"
 
 	"github.com/NebulousLabs/Sia/api"
+	"github.com/NebulousLabs/Sia/types"
 	"github.com/google/uuid"
 	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
 	"github.com/thegreatdb/siacdn/siacdn-backend/randstring"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const siaPerTB = 210.39 // https://siastats.info/storage_pricing.html
+//const siaPerTB = 2.1 // Just for testing
+const slopMultiple = 1.05
+const numTerms = 1.2
 const kubeNamespace = "sia"
 
 const SIANODE_STATUS_CREATED = "created"           // This object has been created
@@ -23,6 +28,7 @@ const SIANODE_STATUS_SYNCHRONIZED = "synchronized" // Blockchain has synchronize
 const SIANODE_STATUS_INITIALIZED = "initialized"   // Wallet has been initialized
 const SIANODE_STATUS_UNLOCKED = "unlocked"         // Wallet has been unlocked
 const SIANODE_STATUS_FUNDED = "funded"             // Account has received initial funding
+const SIANODE_STATUS_CONFIRMED = "confirmed"       // Funding has been confirmed by the server
 const SIANODE_STATUS_CONFIGURED = "configured"     // Allowance has been set
 const SIANODE_STATUS_READY = "ready"               // Everything is ready to go and contracts are all set
 const SIANODE_STATUS_STOPPED = "stopped"           // A user or administrator has stopped the node
@@ -75,16 +81,27 @@ func (sn *SiaNode) SiaClient() (*api.Client, error) {
 	var ip string
 	if clusterType == kube.ClusterTypeExternal {
 		log.Println("Found external cluster, assuming local tunnel. " +
-			"Run the following command:\n\n\t" +
-			"kubectl --namespace=sia port-forward " +
+			"Run the following command:\n\tkubectl --namespace=sia port-forward " +
 			"$(kubectl --namespace=sia get pods -l app=" + sn.KubeNameApp() +
-			" -o jsonpath=\"{.items[0].metadata.name}\") 9980\n")
+			" -o jsonpath=\"{.items[0].metadata.name}\") 9980")
 		ip = "localhost"
 	} else {
 		ip = service.Spec.ClusterIP
 	}
 	client := api.NewClient(ip+":9980", os.Getenv("SIA_API_PASSWORD"))
 	return client, nil
+}
+
+func (sn *SiaNode) AllowanceCurrency() types.Currency {
+	return types.SiacoinPrecision.MulFloat(siaPerTB).Mul64(uint64(sn.Capacity))
+}
+
+func (sn *SiaNode) RequestedCurrency() types.Currency {
+	return types.SiacoinPrecision.MulFloat(siaPerTB * numTerms * slopMultiple).Mul64(uint64(sn.Capacity))
+}
+
+func (sn *SiaNode) DesiredCurrency() types.Currency {
+	return types.SiacoinPrecision.MulFloat(siaPerTB * numTerms).Mul64(uint64(sn.Capacity))
 }
 
 func (sn *SiaNode) ValidateStatus() error {
@@ -97,6 +114,7 @@ func (sn *SiaNode) ValidateStatus() error {
 		SIANODE_STATUS_INITIALIZED,
 		SIANODE_STATUS_UNLOCKED,
 		SIANODE_STATUS_FUNDED,
+		SIANODE_STATUS_CONFIRMED,
 		SIANODE_STATUS_CONFIGURED,
 		SIANODE_STATUS_READY,
 		SIANODE_STATUS_STOPPED,
@@ -120,17 +138,21 @@ func (sn *SiaNode) Pending() bool {
 }
 
 func (sn *SiaNode) KubeNameApp() string {
-	return fmt.Sprintf("sia-%s", sn.Shortcode)
+	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
 }
 
 func (sn *SiaNode) KubeNameDep() string {
-	return fmt.Sprintf("sia-%s", sn.Shortcode)
+	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
 }
 
 func (sn *SiaNode) KubeNameVol() string {
-	return fmt.Sprintf("sia-%s", sn.Shortcode)
+	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
 }
 
 func (sn *SiaNode) KubeNameSer() string {
-	return fmt.Sprintf("sia-%s", sn.Shortcode)
+	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
+}
+
+func (sn *SiaNode) KubeNameSec() string {
+	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
 }

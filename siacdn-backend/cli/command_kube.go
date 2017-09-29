@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
 	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/siacdn-backend/prime"
 	urfavecli "github.com/urfave/cli"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -30,6 +31,11 @@ const kubeNamespace = "sia"
 //var kubeStorageClass = "standard"
 var kubeStorageClass = "fast"
 var kubeDefaultStorage = resource.MustParse("30Gi")
+
+const siaHosts = 40
+const siaNeededContracts = 20  // Once we have half the hosts, we can confirm it
+const siaContractPeriod = 4380 // Number of 10m intervals in 1 month
+const siaRenewWindow = 400
 
 var kubeMu sync.Mutex
 var kubeInFlight map[uuid.UUID]bool = map[uuid.UUID]bool{}
@@ -105,6 +111,8 @@ func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 		go pollKubeUnlocked(clientset, siaNode)
 	case models.SIANODE_STATUS_FUNDED:
 		go pollKubeFunded(clientset, siaNode)
+	case models.SIANODE_STATUS_CONFIRMED:
+		go pollKubeConfirmed(clientset, siaNode)
 	case models.SIANODE_STATUS_CONFIGURED:
 		go pollKubeConfigured(clientset, siaNode)
 	default:
@@ -121,6 +129,7 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
 	services := clientset.Services(kubeNamespace)
+	secrets := clientset.Secrets(kubeNamespace)
 
 	// First check for volume claim
 	claim, err := volumeClaims.Get(siaNode.KubeNameVol(), metav1.GetOptions{})
@@ -188,6 +197,31 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 		log.Println("Found service " + siaNode.KubeNameSer())
 	}
 
+	// Third, check for secret
+	secret, err := secrets.Get(siaNode.KubeNameSec(), metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting secret from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if service == nil || errors.IsNotFound(err) {
+		secret = &v1.Secret{}
+		secret.Name = siaNode.KubeNameSec()
+		secret.Namespace = kubeNamespace
+		secret.Type = v1.SecretTypeOpaque
+		secret.Data = map[string][]byte{
+			"siawalletpassword": []byte{},
+		}
+		log.Println("Creating secret " + siaNode.KubeNameSec())
+		secret, err = secrets.Create(secret)
+		if err != nil {
+			log.Println("Error creating secret: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found secret " + siaNode.KubeNameSec())
+	}
+
 	// Finally, check for deployment
 	deployment, err := deployments.Get(siaNode.KubeNameDep(), metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -234,6 +268,17 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 										Name: "sia-secret",
 									},
 									Key: "siaapipassword",
+								},
+							},
+						},
+						v1.EnvVar{
+							Name: "SIA_WALLET_PASSWORD",
+							ValueFrom: &v1.EnvVarSource{
+								SecretKeyRef: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: siaNode.KubeNameSec(),
+									},
+									Key: "siawalletpassword",
 								},
 							},
 						},
@@ -321,13 +366,18 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 	StartFlight(siaNode)
 	defer StopFlight(siaNode)
 
+	pods := clientset.Pods(kubeNamespace)
+	secrets := clientset.Secrets(kubeNamespace)
+
 	client, err := siaNode.SiaClient()
 	if err != nil {
 		return err
 	}
 
 	var resp api.WalletInitPOST
-	if err = client.Post("/wallet/init", "", &resp); err != nil {
+	vals := url.Values{}
+	vals.Set("force", "true")
+	if err = client.Post("/wallet/init", vals.Encode(), &resp); err != nil {
 		log.Println("Got error initializing wallet: " + err.Error())
 		return nil
 	}
@@ -343,6 +393,29 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 		return err
 	}
 
+	secret, err := secrets.Get(siaNode.KubeNameSec(), metav1.GetOptions{})
+	if err != nil {
+		log.Println("Error getting secret from kubernetes: " + err.Error())
+		return err
+	}
+
+	secret.Data["siawalletpassword"] = []byte(resp.PrimarySeed)
+
+	log.Println("Updating kubernetes secret with new info")
+	if secret, err = secrets.Update(secret); err != nil {
+		log.Println("Error updating secret from kubernetes: " + err.Error())
+		return err
+	}
+
+	log.Println("Closing running containers so they receive the new secret")
+	err = pods.DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{
+		LabelSelector: "app=" + siaNode.KubeNameApp(),
+	})
+	if err != nil {
+		log.Println("Could not close running containers")
+		return err
+	}
+
 	log.Println("Initialized wallet on Sia node " + siaNode.Shortcode)
 	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_INITIALIZED)
 	return err
@@ -353,71 +426,68 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 	StartFlight(siaNode)
 	defer StopFlight(siaNode)
 
-	seed, err := getWalletSeed(siaNode.ID)
-	if err != nil {
-		return err
-	}
-	if seed == nil {
-		return fmt.Errorf("Could get wallet seed for unlock")
-	}
-
 	client, err := siaNode.SiaClient()
 	if err != nil {
 		return err
 	}
 
-	log.Println("Unlocking wallet " + siaNode.Shortcode)
-	if err != nil {
-		log.Println("Got error encoding password: " + err.Error())
-		return nil
-	}
-	vals := url.Values{}
-	vals.Set("encryptionpassword", seed.Words)
-	var resp struct {
-		Message string `json:"message"`
-	}
-	if err = client.Post("/wallet/unlock", vals.Encode(), &resp); err != nil {
-		log.Println("Got error unlocking wallet: " + err.Error())
+	log.Println("Checking wallet unlock " + siaNode.Shortcode)
+	var resp api.WalletGET
+	if err = client.Get("/wallet", &resp); err != nil {
+		log.Println("Got error checking wallet unlock: " + err.Error())
 		return nil
 	}
 
-	log.Println(fmt.Sprintf("Got response: %s", resp.Message))
-	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_UNLOCKED)
-	return err
-	/*
-
-
-		//req := fmt.Sprintf("{\"encryptionpassword\":\"%s\"}", siaNode.)
-
-		var resp struct {
-			EncryptionPassword string `json:"encryptionpassword"`
-		}
-		if err = client.Post("/wallet/init", "{}", &resp); err != nil {
-			log.Println("Got error initializing wallet: " + err.Error())
-			return nil
-		}
-
-		if resp.PrimarySeed == "" {
-			log.Println("Could not initialize wallet")
-			return fmt.Errorf("Could not initialize wallet")
-		}
-
-		_, err = createWalletSeed(siaNode.ID, resp.PrimarySeed)
-		if err != nil {
-			log.Println("Got error saving wallet seed: " + err.Error())
-			return err
-		}
-
-		log.Println("Initialized wallet on Sia node " + siaNode.Shortcode)
-		_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_INITIALIZED)
+	if resp.Unlocked {
+		_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_UNLOCKED)
 		return err
-	*/
+	} else {
+		log.Println("Wallet found but not yet unlocked: " + siaNode.Shortcode)
+	}
+	return nil
 }
 
 func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeUnlocked: " + siaNode.Shortcode)
 	StartFlight(siaNode)
 	defer StopFlight(siaNode)
+
+	prime, err := prime.Server(clientset)
+	if err != nil {
+		log.Println("Could not get a connection to the prime Sia node: " + err.Error())
+		return err
+	}
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		log.Println("Could not get a connection to the sia node" + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	var address api.WalletAddressGET
+	if err = client.Get("/wallet/address", &address); err != nil {
+		log.Println("Could not get an address to " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	// In this one we do the node change first before funding, because a failure
+	// in this case results in a support case, but in the other case results in
+	// a timing attack where an attacker could possibly drain the prime account
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_FUNDED)
+	if err != nil {
+		log.Println("Could not update the SiaNode status to funded: " + err.Error())
+		return err
+	}
+
+	var vals = url.Values{}
+	vals.Set("amount", siaNode.RequestedCurrency().String())
+	vals.Set("destination", address.Address.String())
+	var resp api.WalletSiacoinsPOST
+	if err = prime.Post("/wallet/siacoins", vals.Encode(), &resp); err != nil {
+		log.Println("Could not send coins to " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
 	return nil
 }
 
@@ -425,6 +495,58 @@ func pollKubeFunded(clientset *kubernetes.Clientset, siaNode *models.SiaNode) er
 	log.Println("PollKubeFunded: " + siaNode.Shortcode)
 	StartFlight(siaNode)
 	defer StopFlight(siaNode)
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		log.Println("Could not get a connection to the sia node" + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	var resp api.WalletGET
+	if err = client.Get("/wallet", &resp); err != nil {
+		log.Println("Could not get balance for " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	if resp.ConfirmedSiacoinBalance.Cmp(siaNode.DesiredCurrency()) >= 0 {
+		_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_CONFIRMED)
+		if err != nil {
+			log.Println("Could not update the SiaNode status to confirmed: " + err.Error())
+			return err
+		}
+	}
+
+	return nil
+}
+
+func pollKubeConfirmed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
+	log.Println("PollKubeConfirmed: " + siaNode.Shortcode)
+	StartFlight(siaNode)
+	defer StopFlight(siaNode)
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		log.Println("Could not get a connection to the sia node" + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	vals := url.Values{}
+	vals.Set("funds", siaNode.AllowanceCurrency().String())
+	vals.Set("hosts", fmt.Sprintf("%d", siaHosts))
+	vals.Set("period", fmt.Sprintf("%d", siaContractPeriod))
+	vals.Set("renewwindow", fmt.Sprintf("%d", siaRenewWindow))
+	var resp map[string]interface{}
+	if err := client.Post("/renter", vals.Encode(), &resp); err != nil {
+		log.Println("Could not set renter " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_CONFIGURED)
+	if err != nil {
+		log.Println("Could not update the SiaNode status to configured: " + err.Error())
+		return err
+	}
+
 	return nil
 }
 
@@ -432,6 +554,35 @@ func pollKubeConfigured(clientset *kubernetes.Clientset, siaNode *models.SiaNode
 	log.Println("PollKubeConfigured: " + siaNode.Shortcode)
 	StartFlight(siaNode)
 	defer StopFlight(siaNode)
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		log.Println("Could not get a connection to the sia node" + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	var resp struct {
+		Contracts []map[string]interface{} `json:"contracts"`
+	}
+	if err := client.Get("/renter/contracts", &resp); err != nil {
+		log.Println("Could not set renter " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	numContracts := len(resp.Contracts)
+
+	if numContracts >= siaNeededContracts {
+		_, err := updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_READY)
+		if err != nil {
+			log.Println("Could not update the SiaNode status to configured: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println(fmt.Sprintf("Not enough contracts yet (%d/%d) of total %d", numContracts, siaNeededContracts, siaHosts))
+	}
+
+	return nil
+
 	return nil
 }
 
