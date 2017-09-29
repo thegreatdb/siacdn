@@ -58,6 +58,7 @@ func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r.POST("/sianodes/id/:id", s.handleUpdateSiaNode)
 	r.GET("/sianodes/id/:id", s.handleGetSiaNode)
 	r.GET("/sianodes/orphaned", s.handleGetOrphanedSiaNode)
+	r.GET("/sianodes/orphaned/ready", s.handleGetReadyOrphanedSiaNodes)
 	r.GET("/sianodes/pending/all", s.handleGetPendingSiaNodes)
 	r.GET("/wallets/:id/seed", s.handleGetWalletSeed)
 	r.POST("/wallets/:id/seed", s.handleCreateWalletSeed)

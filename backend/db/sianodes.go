@@ -57,3 +57,17 @@ func (db *Database) GetPendingSiaNodes() ([]*models.SiaNode, error) {
 	}
 	return nodes, nil
 }
+
+func (db *Database) GetReadyOrphanedSiaNodes() ([]*models.SiaNode, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	nodes := []*models.SiaNode{}
+	for _, sn := range db.SiaNodes {
+		if sn.Status == models.SIANODE_STATUS_READY &&
+			sn.MinioInstancesActivated == 0 ||
+			sn.MinioInstancesActivated < sn.MinioInstancesRequested {
+			nodes = append(nodes, sn.Copy())
+		}
+	}
+	return nodes, nil
+}
