@@ -13,9 +13,9 @@ import (
 
 	"github.com/NebulousLabs/Sia/api"
 	"github.com/google/uuid"
-	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
-	"github.com/thegreatdb/siacdn/siacdn-backend/prime"
+	"github.com/thegreatdb/siacdn/backend/kube"
+	"github.com/thegreatdb/siacdn/backend/models"
+	"github.com/thegreatdb/siacdn/backend/prime"
 	urfavecli "github.com/urfave/cli"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"

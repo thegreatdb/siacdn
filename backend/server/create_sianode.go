@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/db"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 type createSiaNodeForm struct {

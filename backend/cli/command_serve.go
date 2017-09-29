@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
-	"github.com/thegreatdb/siacdn/siacdn-backend/server"
+	"github.com/thegreatdb/siacdn/backend/db"
+	"github.com/thegreatdb/siacdn/backend/server"
 	urfavecli "github.com/urfave/cli"
 )
 

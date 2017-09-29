@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 var ErrNotFound = errors.New("Database object not found")

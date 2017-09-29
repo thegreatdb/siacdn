@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/db"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 type Request struct {

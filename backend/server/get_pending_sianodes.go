@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
+	"github.com/thegreatdb/siacdn/backend/db"
 )
 
 func (s *HTTPDServer) handleGetPendingSiaNodes(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

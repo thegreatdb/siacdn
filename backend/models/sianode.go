@@ -9,8 +9,8 @@ import (
 	"github.com/NebulousLabs/Sia/api"
 	"github.com/NebulousLabs/Sia/types"
 	"github.com/google/uuid"
-	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
-	"github.com/thegreatdb/siacdn/siacdn-backend/randstring"
+	"github.com/thegreatdb/siacdn/backend/kube"
+	"github.com/thegreatdb/siacdn/backend/randstring"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

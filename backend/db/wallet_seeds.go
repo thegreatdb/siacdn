@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/google/uuid"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 func (db *Database) GetWalletSeed(siaNodeID uuid.UUID) (*models.WalletSeed, error) {

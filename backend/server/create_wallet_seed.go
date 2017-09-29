@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 type createWalletSeedForm struct {

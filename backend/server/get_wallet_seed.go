@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
+	"github.com/thegreatdb/siacdn/backend/db"
 )
 
 func (s *HTTPDServer) handleGetWalletSeed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

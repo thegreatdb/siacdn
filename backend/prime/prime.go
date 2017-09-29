@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/NebulousLabs/Sia/api"
-	"github.com/thegreatdb/siacdn/siacdn-backend/kube"
+	"github.com/thegreatdb/siacdn/backend/kube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )

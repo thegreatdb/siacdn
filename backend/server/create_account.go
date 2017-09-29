@@ -9,8 +9,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/db"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 var stripeSecretKey string

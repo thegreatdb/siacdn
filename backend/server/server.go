@@ -10,7 +10,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
-	"github.com/thegreatdb/siacdn/siacdn-backend/db"
+	"github.com/thegreatdb/siacdn/backend/db"
 )
 
 var ErrNotImplemented error = errors.New("Endpoint has not yet been implemented")

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/thegreatdb/siacdn/siacdn-backend/models"
+	"github.com/thegreatdb/siacdn/backend/models"
 )
 
 func (db *Database) GetAccount(id uuid.UUID) (*models.Account, error) {
