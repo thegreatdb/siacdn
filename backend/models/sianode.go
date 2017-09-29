@@ -36,12 +36,14 @@ const SIANODE_STATUS_DEPLETED = "depleted"         // All the SiaCoins in the ac
 const SIANODE_STATUS_ERROR = "error"               // An error has occurred in the process
 
 type SiaNode struct {
-	ID          uuid.UUID `json:"id"`
-	Shortcode   string    `json:"shortcode"`
-	AccountID   uuid.UUID `json:"account_id"`
-	Capacity    float32   `json:"capacity"`
-	Status      string    `json:"status"`
-	CreatedTime time.Time `json:"created_time"`
+	ID                      uuid.UUID `json:"id"`
+	Shortcode               string    `json:"shortcode"`
+	AccountID               uuid.UUID `json:"account_id"`
+	Capacity                float32   `json:"capacity"`
+	Status                  string    `json:"status"`
+	MinioInstancesRequested int       `json:"minio_instances_requested"`
+	MinioInstancesActivated int       `json:"minio_instances_activated"`
+	CreatedTime             time.Time `json:"created_time"`
 }
 
 func NewSiaNode(accountID uuid.UUID, capacity float32) (*SiaNode, error) {

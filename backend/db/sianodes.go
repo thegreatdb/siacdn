@@ -33,11 +33,13 @@ func (db *Database) SaveSiaNode(sn *models.SiaNode) error {
 	return db.Save()
 }
 
-func (db *Database) GetPendingSiaNode(accountID uuid.UUID) (*models.SiaNode, error) {
+func (db *Database) GetOrphanedSiaNode(accountID uuid.UUID) (*models.SiaNode, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	for _, sn := range db.SiaNodes {
-		if sn.AccountID == accountID && sn.Pending() {
+		if sn.AccountID == accountID &&
+			sn.MinioInstancesActivated == 0 ||
+			sn.MinioInstancesActivated < sn.MinioInstancesRequested {
 			return sn.Copy(), nil
 		}
 	}
