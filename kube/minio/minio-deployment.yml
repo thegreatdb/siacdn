@@ -29,6 +29,16 @@ spec:
                 secretKeyRef:
                   name: sia-secret
                   key: siaapipassword
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: accesskey
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: secretkey
             - name: SIA_DAEMON_ADDR
               value: siacdn-neh1lh4h.sia.svc.cluster.local:9980
             - name: SIA_CACHE_DIR
@@ -43,13 +53,3 @@ spec:
               value: "1"
             - name: SIA_BACKGROUND_UPLOAD
               value: "1"
-            - name: MINIO_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: minio
-                  key: accesskey
-            - name: MINIO_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: minio
-                  key: secretkey

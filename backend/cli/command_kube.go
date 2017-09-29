@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -31,24 +32,28 @@ const kubeNamespace = "sia"
 //var kubeStorageClass = "standard"
 var kubeStorageClass = "fast"
 var kubeDefaultStorage = resource.MustParse("30Gi")
+var minioStorageClass = "standard"
+var minioDefaultStorage = resource.MustParse("100Gi")
 
 const siaHosts = 40
 const siaNeededContracts = 20  // Once we have half the hosts, we can confirm it
 const siaContractPeriod = 4380 // Number of 10m intervals in 1 month
 const siaRenewWindow = 400
+const siaFlightPrefix = "sia-"
+const minioFlightPrefix = "minio-"
 
 var kubeMu sync.Mutex
-var kubeInFlight map[uuid.UUID]bool = map[uuid.UUID]bool{}
+var kubeInFlight map[string]bool = map[string]bool{}
 
-func StartFlight(siaNode *models.SiaNode) {
+func StartFlight(prefix string, siaNode *models.SiaNode) {
 	kubeMu.Lock()
-	kubeInFlight[siaNode.ID] = true
+	kubeInFlight[prefix+siaNode.ID.String()] = true
 	kubeMu.Unlock()
 }
 
-func StopFlight(siaNode *models.SiaNode) {
+func StopFlight(prefix string, siaNode *models.SiaNode) {
 	kubeMu.Lock()
-	delete(kubeInFlight, siaNode.ID)
+	delete(kubeInFlight, prefix+siaNode.ID.String())
 	kubeMu.Unlock()
 }
 
@@ -82,15 +87,306 @@ func PerformKubeRun(clientset *kubernetes.Clientset) error {
 			return err
 		}
 	}
+	siaNodes, err = getReadyOrphanedSiaNodes()
+	if err != nil {
+		return err
+	}
+	for _, siaNode := range siaNodes {
+		for i := 0; i < siaNode.MinioInstancesRequested; i++ {
+			if err = deployMinio(clientset, siaNode, i); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, instance int) error {
+	kubeMu.Lock()
+	_, inFlight := kubeInFlight[fmt.Sprintf("%s%s%d", minioFlightPrefix, siaNode.ID.String(), instance)]
+	kubeMu.Unlock()
+	if inFlight {
+		log.Println("Skipping " + siaNode.ID.String() + " instance " + fmt.Sprintf("%d", instance) + " (minio) because it is in-flight")
+		return nil
+	}
+	go func() {
+		StartFlight(minioFlightPrefix, siaNode)
+		defer StopFlight(minioFlightPrefix, siaNode)
+		name := siaNode.KubeNameMinio(instance)
+		mountPath := fmt.Sprintf("/minio%d", instance)
+
+		deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
+		services := clientset.Services(kubeNamespace)
+		secrets := clientset.Secrets(kubeNamespace)
+		volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
+
+		// First check for volume claim
+		claim, err := volumeClaims.Get(name, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			log.Println("Error getting volume claim from kubernetes: " + err.Error())
+			return
+		}
+		// If it doesn't exist, create it
+		if claim == nil || errors.IsNotFound(err) {
+			claim = &v1.PersistentVolumeClaim{}
+			claim.Name = name
+			claim.Namespace = kubeNamespace
+			claim.Spec = v1.PersistentVolumeClaimSpec{
+				StorageClassName: &minioStorageClass,
+				AccessModes:      []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
+				Resources: v1.ResourceRequirements{
+					Requests: v1.ResourceList{v1.ResourceName("storage"): minioDefaultStorage},
+				},
+			}
+
+			log.Println("Creating volume claim " + siaNode.KubeNameVol())
+			claim, err = volumeClaims.Create(claim)
+			if err != nil {
+				log.Println("Error creating volume claim: " + err.Error())
+				return
+			}
+		} else {
+			log.Println("Found volume claim " + siaNode.KubeNameVol())
+		}
+
+		// Now check the sia deployment to make sure it mounts the minio volume
+		deployment, err := deployments.Get(siaNode.KubeNameDep(), metav1.GetOptions{})
+		if err != nil {
+			log.Println("Error getting deployment from kubernetes: " + err.Error())
+			return
+		}
+
+		siaDeploymentChanged := false
+
+		var volume *v1.Volume
+		for _, vol := range deployment.Spec.Template.Spec.Volumes {
+			if vol.Name == name {
+				volume = &vol
+				break
+			}
+		}
+		// If it doesn't include the volume in the spec, add it
+		if volume == nil {
+			volumes := deployment.Spec.Template.Spec.Volumes
+			volumes = append(volumes, v1.Volume{
+				Name: name,
+				VolumeSource: v1.VolumeSource{
+					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+						ClaimName: name,
+						ReadOnly:  true,
+					},
+				},
+			})
+			deployment.Spec.Template.Spec.Volumes = volumes
+			siaDeploymentChanged = true
+		}
+
+		var volumeMount *v1.VolumeMount
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			for _, vm := range container.VolumeMounts {
+				if vm.Name == name {
+					volumeMount = &vm
+					break
+				}
+			}
+		}
+		// If it doesn't mount the volume in the containers, mount it on each one,
+		// but making sure to do so in read-only mode.
+		if volumeMount == nil {
+			newContainers := []v1.Container{}
+			for _, container := range deployment.Spec.Template.Spec.Containers {
+				container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount{
+					Name:      name,
+					MountPath: mountPath,
+					ReadOnly:  true,
+				})
+				newContainers = append(newContainers, container)
+			}
+			deployment.Spec.Template.Spec.Containers = newContainers
+			siaDeploymentChanged = true
+		}
+
+		if siaDeploymentChanged {
+			log.Println("Changing the Sia deployment in the process of deploying Minio " + name)
+			deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType // TODO: Remove this line sometime, this is just catching old ones to switch it over
+			deployment, err = deployments.Update(deployment)
+			if err != nil {
+				log.Println("Error updating deployment with new volume info in kubernetes: " + err.Error())
+				return
+			}
+		}
+
+		// Now check for service
+		service, err := services.Get(name, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			log.Println("Error getting minio service from kubernetes: " + err.Error())
+			return
+		}
+		// If it doesn't exist, create it
+		if service == nil || errors.IsNotFound(err) {
+			service = &v1.Service{}
+			service.Name = name
+			service.Namespace = kubeNamespace
+			service.Spec = v1.ServiceSpec{
+				Type: v1.ServiceTypeNodePort,
+				Ports: []v1.ServicePort{
+					v1.ServicePort{Port: 9000, TargetPort: intstr.FromInt(9000), Protocol: v1.ProtocolTCP},
+				},
+				Selector: map[string]string{"app": name},
+			}
+			log.Println("Creating service " + name)
+			service, err = services.Create(service)
+			if err != nil {
+				log.Println("Error creating service: " + err.Error())
+				return
+			}
+		} else {
+			log.Println("Found service " + name)
+		}
+
+		// Check for secret
+		secret, err := secrets.Get(name, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			log.Println("Error getting secret from kubernetes: " + err.Error())
+			return
+		}
+		// If it doesn't exist, create it
+		if service == nil || errors.IsNotFound(err) {
+			secret = &v1.Secret{}
+			secret.Name = name
+			secret.Namespace = kubeNamespace
+			secret.Type = v1.SecretTypeOpaque
+			secret.Data = map[string][]byte{
+				"accesskey": []byte(siaNode.MinioAccessKey),
+				"secretkey": []byte(siaNode.MinioSecretKey),
+			}
+			log.Println("Creating secret " + name)
+			secret, err = secrets.Create(secret)
+			if err != nil {
+				log.Println("Error creating secret: " + err.Error())
+				return
+			}
+		} else {
+			log.Println("Found secret " + name)
+		}
+
+		// Finally, check for deployment
+		deployment, err = deployments.Get(name, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			log.Println("Error getting deployment from kubernetes: " + err.Error())
+			return
+		}
+		// If deployment doesn't exist, create it
+		if deployment == nil || errors.IsNotFound(err) {
+			deployment := &v1beta1.Deployment{}
+			deployment.Name = name
+			deployment.Namespace = kubeNamespace
+			deployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
+			deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
+			deployment.Spec.Template.Labels = map[string]string{"app": name}
+			deployment.Spec.Template.Spec = v1.PodSpec{
+				Volumes: []v1.Volume{
+					v1.Volume{
+						Name: name,
+						VolumeSource: v1.VolumeSource{
+							PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+								ClaimName: name,
+							},
+						},
+					},
+				},
+				Containers: []v1.Container{
+					v1.Container{
+						Name:            name,
+						Image:           "gcr.io/gradientzoo-1233/siacdn-minio:latest",
+						ImagePullPolicy: v1.PullAlways,
+						Ports: []v1.ContainerPort{
+							v1.ContainerPort{ContainerPort: 9000},
+						},
+						VolumeMounts: []v1.VolumeMount{
+							v1.VolumeMount{Name: name, MountPath: mountPath},
+						},
+						Env: []v1.EnvVar{
+							v1.EnvVar{
+								Name: "SIA_API_PASSWORD",
+								ValueFrom: &v1.EnvVarSource{
+									SecretKeyRef: &v1.SecretKeySelector{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: "sia-secret",
+										},
+										Key: "siaapipassword",
+									},
+								},
+							},
+							v1.EnvVar{
+								Name: "MINIO_ACCESS_KEY",
+								ValueFrom: &v1.EnvVarSource{
+									SecretKeyRef: &v1.SecretKeySelector{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: name,
+										},
+										Key: "accesskey",
+									},
+								},
+							},
+							v1.EnvVar{
+								Name: "MINIO_SECRET_KEY",
+								ValueFrom: &v1.EnvVarSource{
+									SecretKeyRef: &v1.SecretKeySelector{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: name,
+										},
+										Key: "secretkey",
+									},
+								},
+							},
+							v1.EnvVar{
+								Name:  "SIA_DAEMON_ADDR",
+								Value: siaNode.KubeNameSer() + ".sia.svc.cluster.local:9980",
+							},
+							v1.EnvVar{
+								Name:  "SIA_CACHE_DIR",
+								Value: filepath.Join(mountPath, "siacache"),
+							},
+							v1.EnvVar{
+								Name:  "SIA_DB_FILE",
+								Value: filepath.Join(mountPath, "sia.db"),
+							},
+							v1.EnvVar{
+								Name:  "SIA_CACHE_MAX_SIZE_BYTES",
+								Value: "90000000000",
+							},
+							v1.EnvVar{
+								Name:  "SIA_CACHE_PURGE_AFTER_SEC",
+								Value: "345600",
+							},
+							v1.EnvVar{
+								Name:  "SIA_BACKGROUND_UPLOAD",
+								Value: "1",
+							},
+						},
+					},
+				},
+			}
+			log.Println("Creating deployment " + name)
+			deployment, err = deployments.Create(deployment)
+			if err != nil {
+				log.Println("Error creating deployment: " + err.Error())
+				return
+			}
+		} else {
+			log.Println("Found deployment " + name)
+		}
+	}()
 	return nil
 }
 
 func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	kubeMu.Lock()
-	_, inFlight := kubeInFlight[siaNode.ID]
+	_, inFlight := kubeInFlight[siaFlightPrefix+siaNode.ID.String()]
 	kubeMu.Unlock()
 	if inFlight {
-		log.Println("Skipping " + siaNode.ID.String() + " because it is in-flight")
+		log.Println("Skipping " + siaNode.ID.String() + " (sia) because it is in-flight")
 		return nil
 	}
 	// TODO: Also check length and skip if kubeInFlight has more than 10 going too
@@ -123,8 +419,8 @@ func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 
 func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeCreated: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
@@ -240,6 +536,7 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 		deployment.Name = siaNode.KubeNameDep()
 		deployment.Namespace = kubeNamespace
 		deployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
+		deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
 		deployment.Spec.Template.Labels = map[string]string{"app": siaNode.KubeNameApp()}
 		deployment.Spec.Template.Spec = v1.PodSpec{
 			Volumes: []v1.Volume{
@@ -308,8 +605,8 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 
 func pollKubeDeployed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeDeployed: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 	pod, _ := getPod(clientset, siaNode)
 	if pod == nil || pod.Name == "" {
 		return nil
@@ -321,8 +618,8 @@ func pollKubeDeployed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 
 func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInstanced: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -344,8 +641,8 @@ func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode)
 
 func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeSnapshotted: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -369,8 +666,8 @@ func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 
 func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeSynchronized: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	pods := clientset.Pods(kubeNamespace)
 	secrets := clientset.Secrets(kubeNamespace)
@@ -452,8 +749,8 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 
 func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeInitialized: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -478,8 +775,8 @@ func pollKubeInitialized(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 
 func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeUnlocked: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	prime, err := prime.Server(clientset)
 	if err != nil {
@@ -536,8 +833,8 @@ func pollKubeUnlocked(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 
 func pollKubeFunded(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeFunded: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -563,8 +860,8 @@ func pollKubeFunded(clientset *kubernetes.Clientset, siaNode *models.SiaNode) er
 
 func pollKubeConfirmed(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeConfirmed: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -594,8 +891,8 @@ func pollKubeConfirmed(clientset *kubernetes.Clientset, siaNode *models.SiaNode)
 
 func pollKubeConfigured(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 	log.Println("PollKubeConfigured: " + siaNode.Shortcode)
-	StartFlight(siaNode)
-	defer StopFlight(siaNode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
@@ -649,7 +946,15 @@ func getPod(clientset *kubernetes.Clientset, siaNode *models.SiaNode) (*v1.Pod, 
 // Administrative API Calls
 
 func getPendingSiaNodes() ([]*models.SiaNode, error) {
-	url := fmt.Sprintf("%s/sianodes/pending/all?secret=%s", URLRoot, SiaCDNSecretKey)
+	return getSiaNodes("/sianodes/pending/all")
+}
+
+func getReadyOrphanedSiaNodes() ([]*models.SiaNode, error) {
+	return getSiaNodes("/sianodes/orphaned/ready")
+}
+
+func getSiaNodes(urlPart string) ([]*models.SiaNode, error) {
+	url := fmt.Sprintf("%s%s?secret=%s", URLRoot, urlPart, SiaCDNSecretKey)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -659,14 +964,14 @@ func getPendingSiaNodes() ([]*models.SiaNode, error) {
 
 	res, err := cliClient.Do(req)
 	if err != nil {
-		log.Println("Error making getPendingSiaNodes request: " + err.Error())
+		log.Println("Error making getSiaNodes request: " + err.Error())
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Println("Could not read getPendingSiaNodes response: " + err.Error())
+		log.Println("Could not read getSiaNodes response: " + err.Error())
 		return nil, err
 	}
 

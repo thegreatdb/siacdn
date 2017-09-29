@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"github.com/thegreatdb/siacdn/backend/db"
+	"github.com/thegreatdb/siacdn/backend/randstring"
 )
 
 type updateSiaNodeForm struct {
@@ -56,6 +57,12 @@ func (s *HTTPDServer) handleUpdateSiaNode(w http.ResponseWriter, r *http.Request
 	}
 
 	sn.MinioInstancesRequested = form.MinioInstancesRequested
+	if sn.MinioAccessKey == "" {
+		sn.MinioAccessKey = randstring.NewFromUpper(20)
+	}
+	if sn.MinioSecretKey == "" {
+		sn.MinioSecretKey = randstring.NewFromUpper(40)
+	}
 
 	if err = s.db.SaveSiaNode(sn); err != nil {
 		s.JsonErr(w, "Could not save Sia node: "+err.Error())

@@ -43,6 +43,8 @@ type SiaNode struct {
 	Status                  string    `json:"status"`
 	MinioInstancesRequested int       `json:"minio_instances_requested"`
 	MinioInstancesActivated int       `json:"minio_instances_activated"`
+	MinioAccessKey          string    `json:"minio_access_key"`
+	MinioSecretKey          string    `json:"minio_secret_key"`
 	CreatedTime             time.Time `json:"created_time"`
 }
 
@@ -139,22 +141,30 @@ func (sn *SiaNode) Pending() bool {
 	return true
 }
 
-func (sn *SiaNode) KubeNameApp() string {
+func (sn *SiaNode) KubeNameBase() string {
 	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
+}
+
+func (sn *SiaNode) KubeNameApp() string {
+	return sn.KubeNameBase()
 }
 
 func (sn *SiaNode) KubeNameDep() string {
-	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
+	return sn.KubeNameBase()
 }
 
 func (sn *SiaNode) KubeNameVol() string {
-	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
+	return sn.KubeNameBase()
 }
 
 func (sn *SiaNode) KubeNameSer() string {
-	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
+	return sn.KubeNameBase()
 }
 
 func (sn *SiaNode) KubeNameSec() string {
-	return fmt.Sprintf("siacdn-%s", sn.Shortcode)
+	return sn.KubeNameBase()
+}
+
+func (sn *SiaNode) KubeNameMinio(instance int) string {
+	return fmt.Sprintf("siacdn-%s-%d", sn.Shortcode, instance)
 }
