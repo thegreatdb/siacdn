@@ -1,6 +1,6 @@
 FROM golang:1.9-alpine
 
-ENV BUILD_VERSION 9a8aca037d4a8bf92290476ac2cceeba3b2579ee
+ENV BUILD_VERSION a3bc9432c2d33245e7ab680aee73737172135997
 
 RUN \
   apk update && \

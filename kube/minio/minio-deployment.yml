@@ -31,11 +31,17 @@ spec:
                   key: siaapipassword
             - name: SIA_DAEMON_ADDR
               value: siacdn-neh1lh4h.sia.svc.cluster.local:9980
+            - name: SIA_CACHE_DIR
+              value: /minio/siacache
+            - name: SIA_DB_FILE
+              value: /minio/sia.db
             - name: SIA_CACHE_MAX_SIZE_BYTES
               value: "25000000000"
             - name: SIA_CACHE_PURGE_AFTER_SEC
               value: "345600"
             - name: SIA_DEBUG
+              value: "1"
+            - name: SIA_BACKGROUND_UPLOAD
               value: "1"
             - name: MINIO_ACCESS_KEY
               valueFrom:
