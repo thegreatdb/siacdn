@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
 import { Segment, Header, Button, List, Card, Icon } from 'semantic-ui-react';
+import TimeAgo from 'timeago-react';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import Nav from '../components/nav';
@@ -34,16 +35,22 @@ const Dashboard = ({ authAccount, siaNodes }) => (
                 <Card.Description>
                   <List>
                     <List.Item>
-                      <Icon name="tag" />{' '}
-                      ID: {siaNode.id}
+                      <List.Content>
+                        <Icon name="tag" />{' '}
+                        <strong>ID</strong>: {siaNode.id}
+                      </List.Content>
                     </List.Item>
                     <List.Item>
-                      <Icon name="time" />{' '}
-                      Created: {siaNode.created_time}
+                      <List.Content>
+                        <Icon name="signal" />{' '}
+                        <strong>Status</strong>: {displayStatus[siaNode.status]}
+                      </List.Content>
                     </List.Item>
                     <List.Item>
-                      <Icon name="signal" />{' '}
-                      Status: {displayStatus[siaNode.status]}
+                      <List.Content>
+                        <Icon name="time" />{' '}
+                        <strong>Created</strong>: <TimeAgo datetime={siaNode.created_time} />
+                      </List.Content>
                     </List.Item>
                   </List>
                 </Card.Description>
