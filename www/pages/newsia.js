@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Router from 'next/router';
 import cookies from 'next-cookies';
 import {
   Segment,
@@ -120,12 +121,7 @@ export default class NewSia extends React.Component {
     let { siaNode } = this.state;
     const { authTokenID } = this.props;
 
-    /*
-    if (siaNode && siaNode.state === 'ready') {
-      console.log('Found ready sia node, shutting down Sia check');
-      return;
-    }
-    */
+    const existingSiaNode = this.state.siaNode || this.props.orphanedSiaNode;
 
     //await this.setState({ siaError: null });
     try {
@@ -135,6 +131,11 @@ export default class NewSia extends React.Component {
       return;
     }
     await this.setState({ siaNode });
+
+    if (existingSiaNode && !siaNode) {
+      Router.push('/sianode?id='+existingSiaNode.id);
+      return;
+    }
 
     this.timer = setTimeout(() => this.checkSia(), 1000);
   };
