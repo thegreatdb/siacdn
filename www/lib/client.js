@@ -52,8 +52,13 @@ export default class Client {
   }
 
   async getOrphanedSiaNode() {
-    const resp = await this.get('/sianodes/orphaned');
+    const resp = await this.get('/sianodes/orphaned/first');
     return resp.sianode;
+  }
+
+  async getSiaNodes() {
+    const resp = await this.get('/sianodes/account');
+    return resp.sianodes;
   }
 
   // Supporting and utility functions follow

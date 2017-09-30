@@ -7,7 +7,7 @@ import (
 )
 
 type WalletSeed struct {
-	SiaNodeID   uuid.UUID `json:"sia_node_id"`
+	SiaNodeID   uuid.UUID `json:"sianode_id"`
 	Words       string    `json:"words"`
 	CreatedTime time.Time `json:"created_time"`
 }

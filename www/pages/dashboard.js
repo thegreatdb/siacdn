@@ -1,12 +1,14 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import Router from 'next/router';
 import cookies from 'next-cookies';
-import { Segment, Header, Button, List } from 'semantic-ui-react';
+import { Segment, Header, Button, List, Card, Icon } from 'semantic-ui-react';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import Nav from '../components/nav';
+import { displayStatus } from '../lib/fmt';
 
-const Dashboard = ({ authAccount }) => (
+const Dashboard = ({ authAccount, siaNodes }) => (
   <div>
     <Head>
       <link
@@ -20,7 +22,39 @@ const Dashboard = ({ authAccount }) => (
       <Nav activeItem="dashboard" authAccount={authAccount} />
       <Segment padded>
         <Header as="h1">SiaCDN</Header>
-        <p>This is your dashboard</p>
+        <Card.Group>
+          {siaNodes ? siaNodes.map(siaNode => (
+            <Card fluid href={siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia'} onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              Router.push(siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia');
+            }}>
+              <Card.Content header={'Sia full node: ' + siaNode.shortcode} />
+              <Card.Content>
+                <Card.Description>
+                  <List>
+                    <List.Item>
+                      <Icon name="tag" />{' '}
+                      ID: {siaNode.id}
+                    </List.Item>
+                    <List.Item>
+                      <Icon name="time" />{' '}
+                      Created: {siaNode.created_time}
+                    </List.Item>
+                    <List.Item>
+                      <Icon name="signal" />{' '}
+                      Status: {displayStatus[siaNode.status]}
+                    </List.Item>
+                  </List>
+                </Card.Description>
+              </Card.Content>
+              <Card.Content extra>
+                <Icon name="cloud" />
+                {siaNode.minio_instances_requested} Minio instance{siaNode.minio_instances_requested === 1 ? '' : 's'}
+              </Card.Content>
+            </Card>
+          )) : null}
+        </Card.Group>
       </Segment>
     </div>
   </div>
@@ -38,7 +72,8 @@ Dashboard.getInitialProps = async ctx => {
   } catch (err) {
     redirect(ctx, '/signup');
   }
-  return { authAccount };
+  const siaNodes = await client.getSiaNodes();
+  return { authAccount, siaNodes };
 };
 
 export default Dashboard;

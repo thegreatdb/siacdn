@@ -18,6 +18,7 @@ import {
 import Nav from '../components/nav';
 import redirect from '../lib/redirect';
 import Client from '../lib/client';
+import { displayStatus } from '../lib/fmt';
 
 const siaCostOptions = [
   { key: 0.02, text: ' 50GB - $0.024/mo', value: '0.02' },
@@ -36,27 +37,6 @@ const siaCostOptions = [
 const minioCountOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(i => (
   { key: i, text:  ' ' + i + ' Sia-Enabled Minio Instance' + (i == 1 ? '' : 's') + ' - $' + (i * 10) + '/mo', value: '' + i }
 ));
-
-const displayStatus = {
-  created: '2) Sending specifications to the deployment server...',
-  deployed: '3) Waiting for resources from deployment server...',
-  instanced: '4) Initialized Sia node, now downloading a recent blockchain snapshot...',
-  snapshotted:
-    '5) Finished snapshotting, now downloading the latest blockchain updates...',
-  synchronized: '6) Blockchain fully synced. Initializing wallet...',
-  initialized:
-    '7) Unlocking your wallet for the first time. This has to scan the blockchain, so it can take up to 30 minutes...',
-  unlocked:
-    '8) Transferring enough funds to your Sia node to meet requested storage capacity...',
-  funded: '9) Funds sent. Waiting for confirmation that funds were received...',
-  confirmed: '10) Funding confirmed. Setting storage contract allowance now...',
-  configured:
-    '11) Negotiating storage contracts on your behalf. This can take a while (Sia team working to improve this)...',
-  ready: 'Sia node is up and running!',
-  stopped: 'Stopped.',
-  depleted: 'Insufficient funds to continue.',
-  error: 'Errored.',
-};
 
 export default class NewSia extends React.Component {
   state = {
@@ -295,8 +275,10 @@ export default class NewSia extends React.Component {
                   <Button>Start Minio instances</Button>
                 </Form>) :
               <Message header="Waiting..."
-                       content="Waiting for Sia node to start launching."
-                       warn />}
+                       content={siaNode ?
+                         "Waiting for Sia node to start launching." :
+                         "Waiting for Sia node choice."}
+                       info />}
           </Segment>
 
         </div>

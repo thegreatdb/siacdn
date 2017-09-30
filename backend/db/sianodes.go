@@ -33,6 +33,18 @@ func (db *Database) SaveSiaNode(sn *models.SiaNode) error {
 	return db.Save()
 }
 
+func (db *Database) GetSiaNodesByAccount(id uuid.UUID) ([]*models.SiaNode, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	nodes := []*models.SiaNode{}
+	for _, sn := range db.SiaNodes {
+		if sn.AccountID == id {
+			nodes = append(nodes, sn.Copy())
+		}
+	}
+	return nodes, nil
+}
+
 func (db *Database) GetOrphanedSiaNode(accountID uuid.UUID) (*models.SiaNode, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
