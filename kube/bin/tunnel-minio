@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-kubectl --namespace=sia port-forward minio 9000
