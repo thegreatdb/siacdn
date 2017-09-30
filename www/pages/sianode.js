@@ -48,6 +48,8 @@ const SiaNode = ({ authAccount, siaNode }) => (
             <List.Content>
               <Icon name="cloud" />{' '}
               {siaNode.minio_instances_requested} Minio instance{siaNode.minio_instances_requested === 1 ? '' : 's'}
+              <br />{siaNode.minio_access_key}<br />
+              {siaNode.minio_secret_key}
             </List.Content>
           </List.Item>
         </List>
