@@ -8,7 +8,7 @@ import (
 	urfavecli "github.com/urfave/cli"
 )
 
-const URLRoot = "http://localhost:9095"
+const URLRoot = "http://siacdn-backend.sia.svc.cluster.local:9095"
 
 var SiaCDNSecretKey string
 var cliClient http.Client
