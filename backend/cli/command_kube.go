@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -921,10 +919,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		log.Println("Found nfs volume claim " + nfsName)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
-
 	// Check for the NFS service
 	nfsService, err := services.Get(nfsName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -954,9 +948,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	} else {
 		log.Println("Found nfs service " + nfsName)
 	}
-
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
 
 	// Now check for nfs deployment
 	nfsDeployment, err := deployments.Get(nfsName, metav1.GetOptions{})
@@ -1012,9 +1003,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		log.Println("Found nfs deployment " + nfsName)
 	}
 
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
-
 	// Check for the Sia persistent volume
 	pv, err := volumes.Get(pvName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -1051,9 +1039,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		log.Println("Found nfs persistent volume " + pvName)
 	}
 
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
-
 	// Now check for minio volume claim
 	claim, err := volumeClaims.Get(pvcName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -1085,9 +1070,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	} else {
 		log.Println("Found volume claim " + pvcName)
 	}
-
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
 
 	// Now check the sia deployment to make sure it mounts the minio volume
 	siaDeployment, err := deployments.Get(siaNode.KubeNameDep(), metav1.GetOptions{})
@@ -1154,9 +1136,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		}
 	}
 
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
-
 	// Now check for service
 	service, err := services.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -1185,9 +1164,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		log.Println("Found service " + name)
 	}
 
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
-
 	// Check for secret
 	secret, err := secrets.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -1213,9 +1189,6 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	} else {
 		log.Println("Found secret " + name)
 	}
-
-	fmt.Print("Enter when ready: ")
-	reader.ReadString('\n')
 
 	// Finally, check for deployment
 	deployment, err := deployments.Get(name, metav1.GetOptions{})
