@@ -25,7 +25,7 @@ const Dashboard = ({ authAccount, siaNodes }) => (
         <Header as="h1">SiaCDN</Header>
         <Card.Group>
           {siaNodes ? siaNodes.map(siaNode => (
-            <Card fluid href={siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia'} onClick={(ev) => {
+            <Card key={siaNode.shortcode} fluid href={siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia'} onClick={(ev) => {
               ev.preventDefault();
               ev.stopPropagation();
               Router.push(siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia');
