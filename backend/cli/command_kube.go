@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -33,6 +35,7 @@ const kubeNamespace = "sia"
 var kubeStorageClass = "fast"
 var kubeDefaultStorage = resource.MustParse("30Gi")
 var minioStorageClass = "standard"
+var nfsStorageClass = ""
 var minioDefaultStorage = resource.MustParse("100Gi")
 
 const siaHosts = 40
@@ -41,6 +44,8 @@ const siaContractPeriod = 4380 // Number of 10m intervals in 1 month
 const siaRenewWindow = 400
 const siaFlightPrefix = "sia-"
 const minioFlightPrefix = "minio-"
+
+var securityContextPrivileged bool = true
 
 var kubeMu sync.Mutex
 var kubeInFlight map[string]bool = map[string]bool{}
@@ -98,286 +103,6 @@ func PerformKubeRun(clientset *kubernetes.Clientset) error {
 			}
 		}
 	}
-	return nil
-}
-
-func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, instance int) error {
-	kubeMu.Lock()
-	_, inFlight := kubeInFlight[fmt.Sprintf("%s%s%d", minioFlightPrefix, siaNode.ID.String(), instance)]
-	kubeMu.Unlock()
-	if inFlight {
-		log.Println("Skipping " + siaNode.ID.String() + " instance " + fmt.Sprintf("%d", instance) + " (minio) because it is in-flight")
-		return nil
-	}
-	go func() {
-		StartFlight(minioFlightPrefix, siaNode)
-		defer StopFlight(minioFlightPrefix, siaNode)
-		name := siaNode.KubeNameMinio(instance)
-		mountPath := fmt.Sprintf("/minio%d", instance)
-
-		deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
-		services := clientset.Services(kubeNamespace)
-		secrets := clientset.Secrets(kubeNamespace)
-		volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
-
-		// First check for volume claim
-		claim, err := volumeClaims.Get(name, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			log.Println("Error getting volume claim from kubernetes: " + err.Error())
-			return
-		}
-		// If it doesn't exist, create it
-		if claim == nil || errors.IsNotFound(err) {
-			claim = &v1.PersistentVolumeClaim{}
-			claim.Name = name
-			claim.Namespace = kubeNamespace
-			claim.Spec = v1.PersistentVolumeClaimSpec{
-				StorageClassName: &minioStorageClass,
-				AccessModes:      []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
-				Resources: v1.ResourceRequirements{
-					Requests: v1.ResourceList{v1.ResourceName("storage"): minioDefaultStorage},
-				},
-			}
-
-			log.Println("Creating volume claim " + siaNode.KubeNameVol())
-			claim, err = volumeClaims.Create(claim)
-			if err != nil {
-				log.Println("Error creating volume claim: " + err.Error())
-				return
-			}
-		} else {
-			log.Println("Found volume claim " + siaNode.KubeNameVol())
-		}
-
-		// Now check the sia deployment to make sure it mounts the minio volume
-		deployment, err := deployments.Get(siaNode.KubeNameDep(), metav1.GetOptions{})
-		if err != nil {
-			log.Println("Error getting deployment from kubernetes: " + err.Error())
-			return
-		}
-
-		siaDeploymentChanged := false
-
-		var volume *v1.Volume
-		for _, vol := range deployment.Spec.Template.Spec.Volumes {
-			if vol.Name == name {
-				volume = &vol
-				break
-			}
-		}
-		// If it doesn't include the volume in the spec, add it
-		if volume == nil {
-			volumes := deployment.Spec.Template.Spec.Volumes
-			volumes = append(volumes, v1.Volume{
-				Name: name,
-				VolumeSource: v1.VolumeSource{
-					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-						ClaimName: name,
-						ReadOnly:  true,
-					},
-				},
-			})
-			deployment.Spec.Template.Spec.Volumes = volumes
-			siaDeploymentChanged = true
-		}
-
-		var volumeMount *v1.VolumeMount
-		for _, container := range deployment.Spec.Template.Spec.Containers {
-			for _, vm := range container.VolumeMounts {
-				if vm.Name == name {
-					volumeMount = &vm
-					break
-				}
-			}
-		}
-		// If it doesn't mount the volume in the containers, mount it on each one,
-		// but making sure to do so in read-only mode.
-		if volumeMount == nil {
-			newContainers := []v1.Container{}
-			for _, container := range deployment.Spec.Template.Spec.Containers {
-				container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount{
-					Name:      name,
-					MountPath: mountPath,
-					ReadOnly:  true,
-				})
-				newContainers = append(newContainers, container)
-			}
-			deployment.Spec.Template.Spec.Containers = newContainers
-			siaDeploymentChanged = true
-		}
-
-		if siaDeploymentChanged {
-			log.Println("Changing the Sia deployment in the process of deploying Minio " + name)
-			deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType // TODO: Remove this line sometime, this is just catching old ones to switch it over
-			deployment, err = deployments.Update(deployment)
-			if err != nil {
-				log.Println("Error updating deployment with new volume info in kubernetes: " + err.Error())
-				return
-			}
-		}
-
-		// Now check for service
-		service, err := services.Get(name, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			log.Println("Error getting minio service from kubernetes: " + err.Error())
-			return
-		}
-		// If it doesn't exist, create it
-		if service == nil || errors.IsNotFound(err) {
-			service = &v1.Service{}
-			service.Name = name
-			service.Namespace = kubeNamespace
-			service.Spec = v1.ServiceSpec{
-				Type: v1.ServiceTypeNodePort,
-				Ports: []v1.ServicePort{
-					v1.ServicePort{Port: 9000, TargetPort: intstr.FromInt(9000), Protocol: v1.ProtocolTCP},
-				},
-				Selector: map[string]string{"app": name},
-			}
-			log.Println("Creating service " + name)
-			service, err = services.Create(service)
-			if err != nil {
-				log.Println("Error creating service: " + err.Error())
-				return
-			}
-		} else {
-			log.Println("Found service " + name)
-		}
-
-		// Check for secret
-		secret, err := secrets.Get(name, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			log.Println("Error getting secret from kubernetes: " + err.Error())
-			return
-		}
-		// If it doesn't exist, create it
-		if service == nil || errors.IsNotFound(err) {
-			secret = &v1.Secret{}
-			secret.Name = name
-			secret.Namespace = kubeNamespace
-			secret.Type = v1.SecretTypeOpaque
-			secret.Data = map[string][]byte{
-				"accesskey": []byte(siaNode.MinioAccessKey),
-				"secretkey": []byte(siaNode.MinioSecretKey),
-			}
-			log.Println("Creating secret " + name)
-			secret, err = secrets.Create(secret)
-			if err != nil {
-				log.Println("Error creating secret: " + err.Error())
-				return
-			}
-		} else {
-			log.Println("Found secret " + name)
-		}
-
-		// Finally, check for deployment
-		deployment, err = deployments.Get(name, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			log.Println("Error getting deployment from kubernetes: " + err.Error())
-			return
-		}
-		// If deployment doesn't exist, create it
-		if deployment == nil || errors.IsNotFound(err) {
-			deployment := &v1beta1.Deployment{}
-			deployment.Name = name
-			deployment.Namespace = kubeNamespace
-			deployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
-			deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
-			deployment.Spec.Template.Labels = map[string]string{"app": name}
-			deployment.Spec.Template.Spec = v1.PodSpec{
-				Volumes: []v1.Volume{
-					v1.Volume{
-						Name: name,
-						VolumeSource: v1.VolumeSource{
-							PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-								ClaimName: name,
-							},
-						},
-					},
-				},
-				Containers: []v1.Container{
-					v1.Container{
-						Name:            name,
-						Image:           "gcr.io/gradientzoo-1233/siacdn-minio:latest",
-						ImagePullPolicy: v1.PullAlways,
-						Ports: []v1.ContainerPort{
-							v1.ContainerPort{ContainerPort: 9000},
-						},
-						VolumeMounts: []v1.VolumeMount{
-							v1.VolumeMount{Name: name, MountPath: mountPath},
-						},
-						Env: []v1.EnvVar{
-							v1.EnvVar{
-								Name: "SIA_API_PASSWORD",
-								ValueFrom: &v1.EnvVarSource{
-									SecretKeyRef: &v1.SecretKeySelector{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: "sia-secret",
-										},
-										Key: "siaapipassword",
-									},
-								},
-							},
-							v1.EnvVar{
-								Name: "MINIO_ACCESS_KEY",
-								ValueFrom: &v1.EnvVarSource{
-									SecretKeyRef: &v1.SecretKeySelector{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: name,
-										},
-										Key: "accesskey",
-									},
-								},
-							},
-							v1.EnvVar{
-								Name: "MINIO_SECRET_KEY",
-								ValueFrom: &v1.EnvVarSource{
-									SecretKeyRef: &v1.SecretKeySelector{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: name,
-										},
-										Key: "secretkey",
-									},
-								},
-							},
-							v1.EnvVar{
-								Name:  "SIA_DAEMON_ADDR",
-								Value: siaNode.KubeNameSer() + ".sia.svc.cluster.local:9980",
-							},
-							v1.EnvVar{
-								Name:  "SIA_CACHE_DIR",
-								Value: filepath.Join(mountPath, "siacache"),
-							},
-							v1.EnvVar{
-								Name:  "SIA_DB_FILE",
-								Value: filepath.Join(mountPath, "sia.db"),
-							},
-							v1.EnvVar{
-								Name:  "SIA_CACHE_MAX_SIZE_BYTES",
-								Value: "90000000000",
-							},
-							v1.EnvVar{
-								Name:  "SIA_CACHE_PURGE_AFTER_SEC",
-								Value: "345600",
-							},
-							v1.EnvVar{
-								Name:  "SIA_BACKGROUND_UPLOAD",
-								Value: "1",
-							},
-						},
-					},
-				},
-			}
-			log.Println("Creating deployment " + name)
-			deployment, err = deployments.Create(deployment)
-			if err != nil {
-				log.Println("Error creating deployment: " + err.Error())
-				return
-			}
-		} else {
-			log.Println("Found deployment " + name)
-		}
-	}()
 	return nil
 }
 
@@ -1030,6 +755,49 @@ func updateSiaNodeStatus(id uuid.UUID, status string) (*models.SiaNode, error) {
 	return node.SiaNode, nil
 }
 
+func updateSiaNodeMinioInstancesActivated(id uuid.UUID, instances int) (*models.SiaNode, error) {
+	url := fmt.Sprintf("%s/sianodes/id/%s?secret=%s", URLRoot, id.String(), SiaCDNSecretKey)
+
+	reqBodyData := struct {
+		Instances int `json:"minio_instances_activated"`
+	}{Instances: instances}
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(reqBodyData)
+	if err != nil {
+		log.Println("Could not encode sia node update json: " + err.Error())
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		log.Println("Could not create request POST " + url)
+		return nil, err
+	}
+
+	res, err := cliClient.Do(req)
+	if err != nil {
+		log.Println("Error making updateSiaNodeMinioInstancesActivated request: " + err.Error())
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("Could not read updateSiaNodeMinioInstancesActivated response: " + err.Error())
+		return nil, err
+	}
+
+	var node struct {
+		SiaNode *models.SiaNode `json:"sianode"`
+	}
+	if err = json.Unmarshal(body, &node); err != nil {
+		log.Println("Could not decode response: " + err.Error())
+		return nil, err
+	}
+	return node.SiaNode, nil
+}
+
 func createWalletSeed(siaNodeID uuid.UUID, words string) (*models.WalletSeed, error) {
 	url := fmt.Sprintf("%s/wallets/%s/seed?secret=%s", URLRoot, siaNodeID, SiaCDNSecretKey)
 
@@ -1105,4 +873,464 @@ func getWalletSeed(siaNodeID uuid.UUID) (*models.WalletSeed, error) {
 	}
 
 	return resp.Seed, nil
+}
+
+//////////////////////////////////
+//////// MINIO STUFF /////////////
+//////////////////////////////////
+
+func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, instance int) error {
+	name := siaNode.KubeNameMinio(instance)
+	nfsName := siaNode.KubeNameMinioNFS(instance)
+	pvName := nfsName + "-pv"
+	pvcName := nfsName + "-pvc"
+	mountPath := fmt.Sprintf("/minio%d", instance)
+
+	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
+	services := clientset.Services(kubeNamespace)
+	secrets := clientset.Secrets(kubeNamespace)
+	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
+	volumes := clientset.PersistentVolumes()
+
+	// First check for nfs volume claim
+	nfsClaim, err := volumeClaims.Get(nfsName, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting volume claim from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if nfsClaim == nil || errors.IsNotFound(err) {
+		nfsClaim = &v1.PersistentVolumeClaim{}
+		nfsClaim.Name = nfsName
+		nfsClaim.Namespace = kubeNamespace
+		nfsClaim.Spec = v1.PersistentVolumeClaimSpec{
+			StorageClassName: &minioStorageClass,
+			AccessModes:      []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
+			Resources: v1.ResourceRequirements{
+				Requests: v1.ResourceList{v1.ResourceName("storage"): minioDefaultStorage},
+			},
+		}
+
+		log.Println("Creating nfs volume claim " + nfsName)
+		nfsClaim, err = volumeClaims.Create(nfsClaim)
+		if err != nil {
+			log.Println("Error creating nfs volume claim: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found nfs volume claim " + nfsName)
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Check for the NFS service
+	nfsService, err := services.Get(nfsName, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting service from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if nfsService == nil || errors.IsNotFound(err) {
+		nfsService = &v1.Service{}
+		nfsService.Name = nfsName
+		nfsService.Namespace = kubeNamespace
+		nfsService.Spec = v1.ServiceSpec{
+			Type: v1.ServiceTypeNodePort,
+			Ports: []v1.ServicePort{
+				v1.ServicePort{Name: "nfs", Port: 2049},
+				v1.ServicePort{Name: "mountd", Port: 20048},
+				v1.ServicePort{Name: "rpcbind", Port: 111},
+			},
+			Selector: map[string]string{"app": nfsName},
+		}
+		log.Println("Creating nfs service " + nfsName)
+		nfsService, err = services.Create(nfsService)
+		if err != nil {
+			log.Println("Error creating nfs service: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found nfs service " + nfsName)
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Now check for nfs deployment
+	nfsDeployment, err := deployments.Get(nfsName, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting deployment from kubernetes: " + err.Error())
+		return err
+	}
+	// If nfs deployment doesn't exist, create it
+	if nfsDeployment == nil || errors.IsNotFound(err) {
+		nfsDeployment := &v1beta1.Deployment{}
+		nfsDeployment.Name = nfsName
+		nfsDeployment.Namespace = kubeNamespace
+		nfsDeployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
+		nfsDeployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
+		nfsDeployment.Spec.Template.Labels = map[string]string{"app": nfsName}
+		nfsDeployment.Spec.Template.Spec = v1.PodSpec{
+			Volumes: []v1.Volume{
+				v1.Volume{
+					Name: "nfs",
+					VolumeSource: v1.VolumeSource{
+						PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+							ClaimName: nfsName,
+						},
+					},
+				},
+			},
+			Containers: []v1.Container{
+				v1.Container{
+					Name:            name,
+					Image:           "gcr.io/google_containers/volume-nfs:0.8",
+					ImagePullPolicy: v1.PullAlways,
+					Ports: []v1.ContainerPort{
+						v1.ContainerPort{Name: "nfs", ContainerPort: 2049},
+						v1.ContainerPort{Name: "mountd", ContainerPort: 20048},
+						v1.ContainerPort{Name: "rpcbind", ContainerPort: 111},
+					},
+					SecurityContext: &v1.SecurityContext{
+						Privileged: &securityContextPrivileged,
+					},
+					VolumeMounts: []v1.VolumeMount{
+						v1.VolumeMount{Name: "nfs", MountPath: "/exports"},
+					},
+				},
+			},
+		}
+		log.Println("Creating nfs deployment " + name)
+		nfsDeployment, err = deployments.Create(nfsDeployment)
+		if err != nil {
+			log.Println("Error creating nfs deployment: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found nfs deployment " + nfsName)
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Check for the Sia persistent volume
+	pv, err := volumes.Get(pvName, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting persistent volume from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if pv == nil || errors.IsNotFound(err) {
+		pv = &v1.PersistentVolume{}
+		pv.Name = pvName
+		pv.Namespace = kubeNamespace
+		pv.Spec = v1.PersistentVolumeSpec{
+			Capacity: v1.ResourceList{
+				"storage": minioDefaultStorage,
+			},
+			AccessModes: []v1.PersistentVolumeAccessMode{
+				v1.ReadWriteMany,
+			},
+			PersistentVolumeSource: v1.PersistentVolumeSource{
+				NFS: &v1.NFSVolumeSource{
+					Server: nfsService.Spec.ClusterIP,
+					Path:   "/",
+				},
+			},
+		}
+		pv.Labels = map[string]string{"app": pvName}
+		log.Println("Creating nfs persistent volume " + pvName)
+		pv, err = volumes.Create(pv)
+		if err != nil {
+			log.Println("Error creating nfs persistent volume: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found nfs persistent volume " + pvName)
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Now check for minio volume claim
+	claim, err := volumeClaims.Get(pvcName, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting volume claim from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if claim == nil || errors.IsNotFound(err) {
+		claim = &v1.PersistentVolumeClaim{}
+		claim.Name = pvcName
+		claim.Namespace = kubeNamespace
+		claim.Spec = v1.PersistentVolumeClaimSpec{
+			StorageClassName: &nfsStorageClass,
+			AccessModes:      []v1.PersistentVolumeAccessMode{v1.ReadWriteMany},
+			Resources: v1.ResourceRequirements{
+				Requests: v1.ResourceList{v1.ResourceName("storage"): minioDefaultStorage},
+			},
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": pvName},
+			},
+		}
+
+		log.Println("Creating volume claim " + pvcName)
+		claim, err = volumeClaims.Create(claim)
+		if err != nil {
+			log.Println("Error creating volume claim: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found volume claim " + pvcName)
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Now check the sia deployment to make sure it mounts the minio volume
+	siaDeployment, err := deployments.Get(siaNode.KubeNameDep(), metav1.GetOptions{})
+	if err != nil {
+		log.Println("Error getting deployment from kubernetes: " + err.Error())
+		return err
+	}
+
+	siaDeploymentChanged := false
+
+	var volume *v1.Volume
+	for _, vol := range siaDeployment.Spec.Template.Spec.Volumes {
+		if vol.Name == name {
+			volume = &vol
+			break
+		}
+	}
+	// If it doesn't include the volume in the spec, add it
+	if volume == nil {
+		volumes := siaDeployment.Spec.Template.Spec.Volumes
+		volumes = append(volumes, v1.Volume{
+			Name: pvcName,
+			VolumeSource: v1.VolumeSource{
+				PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvcName,
+				},
+			},
+		})
+		siaDeployment.Spec.Template.Spec.Volumes = volumes
+		siaDeploymentChanged = true
+	}
+
+	var volumeMount *v1.VolumeMount
+	for _, container := range siaDeployment.Spec.Template.Spec.Containers {
+		for _, vm := range container.VolumeMounts {
+			if vm.Name == pvcName {
+				volumeMount = &vm
+				break
+			}
+		}
+	}
+	// If it doesn't mount the volume in the containers, mount it on each one,
+	// but making sure to do so in read-only mode.
+	if volumeMount == nil {
+		newContainers := []v1.Container{}
+		for _, container := range siaDeployment.Spec.Template.Spec.Containers {
+			container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount{
+				Name:      pvcName,
+				MountPath: mountPath,
+			})
+			newContainers = append(newContainers, container)
+		}
+		siaDeployment.Spec.Template.Spec.Containers = newContainers
+		siaDeploymentChanged = true
+	}
+
+	if siaDeploymentChanged {
+		log.Println("Changing the Sia deployment in the process of deploying Minio " + name)
+		siaDeployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType // TODO: Remove this line sometime, this is just catching old ones to switch it over
+		siaDeployment, err = deployments.Update(siaDeployment)
+		if err != nil {
+			log.Println("Error updating sia deployment with new volume info in kubernetes: " + err.Error())
+			return err
+		}
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Now check for service
+	service, err := services.Get(name, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting minio service from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if service == nil || errors.IsNotFound(err) {
+		service = &v1.Service{}
+		service.Name = name
+		service.Namespace = kubeNamespace
+		service.Spec = v1.ServiceSpec{
+			Type: v1.ServiceTypeNodePort,
+			Ports: []v1.ServicePort{
+				v1.ServicePort{Port: 9000, TargetPort: intstr.FromInt(9000), Protocol: v1.ProtocolTCP},
+			},
+			Selector: map[string]string{"app": name},
+		}
+		log.Println("Creating service " + name)
+		service, err = services.Create(service)
+		if err != nil {
+			log.Println("Error creating service: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found service " + name)
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Check for secret
+	secret, err := secrets.Get(name, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting secret from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if service == nil || errors.IsNotFound(err) {
+		secret = &v1.Secret{}
+		secret.Name = name
+		secret.Namespace = kubeNamespace
+		secret.Type = v1.SecretTypeOpaque
+		secret.Data = map[string][]byte{
+			"accesskey": []byte(siaNode.MinioAccessKey),
+			"secretkey": []byte(siaNode.MinioSecretKey),
+		}
+		log.Println("Creating secret " + name)
+		secret, err = secrets.Create(secret)
+		if err != nil {
+			log.Println("Error creating secret: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found secret " + name)
+	}
+
+	fmt.Print("Enter when ready: ")
+	reader.ReadString('\n')
+
+	// Finally, check for deployment
+	deployment, err := deployments.Get(name, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting deployment from kubernetes: " + err.Error())
+		return err
+	}
+	// If deployment doesn't exist, create it
+	if deployment == nil || errors.IsNotFound(err) {
+		deployment := &v1beta1.Deployment{}
+		deployment.Name = name
+		deployment.Namespace = kubeNamespace
+		deployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
+		deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
+		deployment.Spec.Template.Labels = map[string]string{"app": name}
+		deployment.Spec.Template.Spec = v1.PodSpec{
+			Volumes: []v1.Volume{
+				v1.Volume{
+					Name: pvcName,
+					VolumeSource: v1.VolumeSource{
+						PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+							ClaimName: pvcName,
+						},
+					},
+				},
+			},
+			Containers: []v1.Container{
+				v1.Container{
+					Name:            name,
+					Image:           "gcr.io/gradientzoo-1233/siacdn-minio:latest",
+					ImagePullPolicy: v1.PullAlways,
+					Ports: []v1.ContainerPort{
+						v1.ContainerPort{ContainerPort: 9000},
+					},
+					VolumeMounts: []v1.VolumeMount{
+						v1.VolumeMount{Name: pvcName, MountPath: mountPath},
+					},
+					Env: []v1.EnvVar{
+						v1.EnvVar{
+							Name: "SIA_API_PASSWORD",
+							ValueFrom: &v1.EnvVarSource{
+								SecretKeyRef: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: "sia-secret",
+									},
+									Key: "siaapipassword",
+								},
+							},
+						},
+						v1.EnvVar{
+							Name: "MINIO_ACCESS_KEY",
+							ValueFrom: &v1.EnvVarSource{
+								SecretKeyRef: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: name,
+									},
+									Key: "accesskey",
+								},
+							},
+						},
+						v1.EnvVar{
+							Name: "MINIO_SECRET_KEY",
+							ValueFrom: &v1.EnvVarSource{
+								SecretKeyRef: &v1.SecretKeySelector{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: name,
+									},
+									Key: "secretkey",
+								},
+							},
+						},
+						v1.EnvVar{
+							Name:  "SIA_DAEMON_ADDR",
+							Value: siaNode.KubeNameSer() + ".sia.svc.cluster.local:9980",
+						},
+						v1.EnvVar{
+							Name:  "SIA_CACHE_DIR",
+							Value: filepath.Join(mountPath, "siacache"),
+						},
+						v1.EnvVar{
+							Name:  "SIA_DB_FILE",
+							Value: filepath.Join(mountPath, "sia.db"),
+						},
+						v1.EnvVar{
+							Name:  "SIA_CACHE_MAX_SIZE_BYTES",
+							Value: "90000000000",
+						},
+						v1.EnvVar{
+							Name:  "SIA_CACHE_PURGE_AFTER_SEC",
+							Value: "345600",
+						},
+						v1.EnvVar{
+							Name:  "SIA_BACKGROUND_UPLOAD",
+							Value: "1",
+						},
+					},
+				},
+			},
+		}
+		log.Println("Creating deployment " + name)
+		deployment, err = deployments.Create(deployment)
+		if err != nil {
+			log.Println("Error creating deployment: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found deployment " + name)
+	}
+
+	siaNode, err = updateSiaNodeMinioInstancesActivated(siaNode.ID, siaNode.MinioInstancesActivated+1)
+	if err != nil {
+		log.Println("Could not update the number of minio instances activated: " + err.Error())
+		return err
+	}
+
+	log.Println("Successfully activated Minio instance " + name + "!")
+	return nil
 }

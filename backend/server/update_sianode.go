@@ -13,19 +13,23 @@ import (
 
 type updateSiaNodeForm struct {
 	MinioInstancesRequested int `json:"minio_instances_requested"`
+	MinioInstancesActivated int `json:"minio_instances_activated"`
 	// TODO: Other things? Maybe even status?
 }
 
 func (s *HTTPDServer) handleUpdateSiaNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	req := NewRequest(r, s.db)
-	account, err := req.GetAccount()
-	if err != nil && err != db.ErrNotFound {
-		s.JsonErr(w, err.Error())
-		return
-	}
-	if account == nil || err == db.ErrNotFound {
-		s.JsonErr(w, "You must be authenticated to access this resource")
-		return
+	admin := r.URL.Query().Get("secret") == SiaCDNSecretKey
+	if !admin {
+		req := NewRequest(r, s.db)
+		account, err := req.GetAccount()
+		if err != nil && err != db.ErrNotFound {
+			s.JsonErr(w, err.Error())
+			return
+		}
+		if account == nil || err == db.ErrNotFound {
+			s.JsonErr(w, "You must be authenticated to access this resource")
+			return
+		}
 	}
 
 	id, err := uuid.Parse(ps.ByName("id"))
@@ -56,7 +60,11 @@ func (s *HTTPDServer) handleUpdateSiaNode(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	sn.MinioInstancesRequested = form.MinioInstancesRequested
+	if admin {
+		sn.MinioInstancesActivated = form.MinioInstancesActivated
+	} else {
+		sn.MinioInstancesRequested = form.MinioInstancesRequested
+	}
 	if sn.MinioAccessKey == "" {
 		sn.MinioAccessKey = randstring.NewFromUpper(20)
 	}
