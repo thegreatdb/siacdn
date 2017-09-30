@@ -61,6 +61,11 @@ export default class Client {
     return resp.sianodes;
   }
 
+  async getSiaNode(id) {
+    const resp = await this.get('/sianodes/id/' + id);
+    return resp.sianode;
+  }
+
   // Supporting and utility functions follow
 
   headers() {
