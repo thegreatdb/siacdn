@@ -26,6 +26,7 @@ func RunSiaCDNCLIApp() {
 	app.Commands = []urfavecli.Command{
 		ServeCommand(),
 		KubeCommand(),
+		ProxyCommand(),
 	}
 	app.Run(os.Args)
 }

@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: proxy
+  namespace: sia
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        app: proxy
+    spec:
+      containers:
+        - name: sia-docker
+          image: gcr.io/gradientzoo-1233/siacdn-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9096
+          command:
+            - /siacdn/siacdn
+            - proxy

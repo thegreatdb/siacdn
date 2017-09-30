@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: proxy
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "gce"
+spec:
+  tls:
+    - secretName: proxy-cert
+      hosts:
+        - content.siacdn.com
+  backend:
+    serviceName: proxy
+    servicePort: 9096
+  rules:
+  - host: content.siacdn.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: proxy
+          servicePort: 9096
