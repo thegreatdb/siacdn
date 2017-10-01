@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: siacdn-www
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "gce"
+spec:
+  tls:
+    - secretName: siacdn-www-cert
+      hosts:
+        - siacdn.com
+        - www.siacdn.com
+  backend:
+    serviceName: siacdn-www
+    servicePort: 3000
+  rules:
+  - host: www.siacdn.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: siacdn-www
+          servicePort: 3000
+  - host: siacdn.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: siacdn-www
+          servicePort: 3000

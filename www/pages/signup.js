@@ -160,7 +160,7 @@ export default () =>
   IS_SERVER ? (
     render()
   ) : (
-    <StripeProvider apiKey="pk_test_zMFraFeAYdlJGMqNzSq1Bw5o">
+    <StripeProvider apiKey="pk_live_cldTU8d2mloPzbJhYzb8dQF2">
       {render()}
     </StripeProvider>
   );

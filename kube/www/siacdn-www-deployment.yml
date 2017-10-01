@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: siacdn-www
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        app: siacdn-www
+    spec:
+      containers:
+        - name: maxint-www
+          image: gcr.io/gradientzoo-1233/siacdn-www:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000

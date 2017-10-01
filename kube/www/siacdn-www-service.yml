@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: siacdn-www
+  namespace: sia
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: siacdn-www

@@ -5,7 +5,7 @@ export default class Client {
   constructor(authTokenID) {
     this.authTokenID = authTokenID;
     this.authAccount = null;
-    this.base = 'http://localhost:9095';
+    this.base = 'https://api.siacdn.com';
   }
 
   setAuthTokenID(id) {
