@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
+import HttpsRedirect from 'react-https-redirect';
 import {
   Segment,
   Grid,
@@ -165,7 +166,7 @@ export default class NewSia extends React.Component {
     const hasMinioError = Boolean(minioError);
     const siaNode = this.state.siaNode || this.props.orphanedSiaNode;
     return (
-      <div>
+      <HttpsRedirect>
         <Head>
           <link
             rel="stylesheet"
@@ -283,7 +284,7 @@ export default class NewSia extends React.Component {
           </Segment>
 
         </div>
-      </div>
+      </HttpsRedirect>
     );
   }
 }

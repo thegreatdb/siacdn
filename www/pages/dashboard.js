@@ -4,13 +4,14 @@ import Router from 'next/router';
 import cookies from 'next-cookies';
 import { Segment, Header, Button, List, Card, Icon } from 'semantic-ui-react';
 import TimeAgo from 'timeago-react';
+import HttpsRedirect from 'react-https-redirect';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import Nav from '../components/nav';
 import { displayStatus } from '../lib/fmt';
 
 const Dashboard = ({ authAccount, siaNodes }) => (
-  <div>
+  <HttpsRedirect>
     <Head>
       <link
         rel="stylesheet"
@@ -64,7 +65,7 @@ const Dashboard = ({ authAccount, siaNodes }) => (
         </Card.Group>
       </Segment>
     </div>
-  </div>
+  </HttpsRedirect>
 );
 
 Dashboard.getInitialProps = async ctx => {

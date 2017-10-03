@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import cookies from 'next-cookies';
+import HttpsRedirect from 'react-https-redirect';
 import {
   Segment,
   Step,
@@ -15,7 +16,7 @@ import Nav from '../components/nav';
 import Client from '../lib/client';
 
 const Index = ({ authAccount }) => (
-  <div>
+  <HttpsRedirect>
     <Head>
       <link
         rel="stylesheet"
@@ -126,7 +127,7 @@ const Index = ({ authAccount }) => (
         </Link>
       </Segment>
     </div>
-  </div>
+  </HttpsRedirect>
 );
 
 Index.getInitialProps = async ctx => {

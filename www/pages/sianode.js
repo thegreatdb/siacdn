@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
+import HttpsRedirect from 'react-https-redirect';
 import { Segment, Header, Button, List, Card, Icon } from 'semantic-ui-react';
 import TimeAgo from 'timeago-react';
 import Client from '../lib/client';
@@ -10,7 +11,7 @@ import Nav from '../components/nav';
 import { displayStatus } from '../lib/fmt';
 
 const SiaNode = ({ authAccount, siaNode }) => (
-  <div>
+  <HttpsRedirect>
     <Head>
       <link
         rel="stylesheet"
@@ -55,7 +56,7 @@ const SiaNode = ({ authAccount, siaNode }) => (
         </List>
       </Segment>
     </div>
-  </div>
+  </HttpsRedirect>
 );
 
 SiaNode.getInitialProps = async ctx => {

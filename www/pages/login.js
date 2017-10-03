@@ -2,6 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Router from 'next/router';
 import cookies from 'next-cookies';
+import HttpsRedirect from 'react-https-redirect';
 import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import Nav from '../components/nav';
@@ -36,7 +37,7 @@ export default class LoginForm extends React.Component {
     const { submitting, error } = this.state;
     const hasError = Boolean(error);
     return (
-      <div>
+      <HttpsRedirect>
         <Head>
           <link
             rel="stylesheet"
@@ -73,7 +74,7 @@ export default class LoginForm extends React.Component {
             </Form>
           </Segment>
         </div>
-      </div>
+      </HttpsRedirect>
     );
   }
 }

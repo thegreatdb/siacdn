@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
+import HttpsRedirect from 'react-https-redirect';
 import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
@@ -137,7 +138,7 @@ if (!IS_SERVER) {
 }
 
 const render = () => (
-  <div>
+  <HttpsRedirect>
     <Head>
       <link
         rel="stylesheet"
@@ -153,7 +154,7 @@ const render = () => (
         <SignupForm />
       </Segment>
     </div>
-  </div>
+  </HttpsRedirect>
 );
 
 export default () =>
