@@ -4,7 +4,7 @@ WORKDIR /root
 
 RUN \
   apk update && \
-  apk add git ca-certificates curl openssl && \
+  apk add git ca-certificates curl openssl util-linux && \
   update-ca-certificates
 
 ENV SIA_COMMIT ebe4195160b756eb43283bf8572dd96fa5ab1f1c

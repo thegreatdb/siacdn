@@ -411,7 +411,7 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 	if seed != nil && seed.Words != "" {
 		var resp map[string]interface{}
 		vals := url.Values{}
-		vals.Set("force", "true")
+		//vals.Set("force", "true")
 		vals.Set("seed", seed.Words)
 		if err = client.Post("/wallet/init/seed", vals.Encode(), &resp); err != nil {
 			log.Println("Got error initializing wallet: " + err.Error())
@@ -421,7 +421,7 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 	} else {
 		var resp api.WalletInitPOST
 		vals := url.Values{}
-		vals.Set("force", "true")
+		//vals.Set("force", "true")
 		if err = client.Post("/wallet/init", vals.Encode(), &resp); err != nil {
 			log.Println("Got error initializing wallet: " + err.Error())
 			return err
@@ -893,6 +893,10 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	volumes := clientset.PersistentVolumes()
 	ingresses := clientset.Ingresses(kubeNamespace)
+
+	if siaNode.Status != models.SIANODE_STATUS_READY {
+		return fmt.Errorf("Waiting for sianode status to be: %s", models.SIANODE_STATUS_READY)
+	}
 
 	// First check for nfs volume claim
 	nfsClaim, err := volumeClaims.Get(nfsName, metav1.GetOptions{})
