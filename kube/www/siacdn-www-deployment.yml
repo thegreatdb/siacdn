@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: siacdn-www
+  namespace: sia
 spec:
   replicas: 4
   template:
