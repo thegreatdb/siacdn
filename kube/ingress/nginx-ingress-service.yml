@@ -9,7 +9,7 @@ metadata:
     app: nginx-ingress-lb
 spec:
   type: LoadBalancer
-  #loadBalancerIP: 104.154.109.191
+  loadBalancerIP: 35.188.49.67
   ports:
   - port: 80
     name: http
