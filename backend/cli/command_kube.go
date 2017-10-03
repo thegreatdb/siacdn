@@ -25,6 +25,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
+	extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 const kubeNamespace = "sia"
@@ -880,8 +881,10 @@ func getWalletSeed(siaNodeID uuid.UUID) (*models.WalletSeed, error) {
 func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, instance int) error {
 	name := siaNode.KubeNameMinio(instance)
 	nfsName := siaNode.KubeNameMinioNFS(instance)
+	hostname := siaNode.MinioHostname(instance)
 	pvName := nfsName + "-pv"
 	pvcName := nfsName + "-pvc"
+	certName := fmt.Sprintf("%s-cert", name)
 	mountPath := fmt.Sprintf("/minio%d", instance)
 
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
@@ -889,6 +892,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	secrets := clientset.Secrets(kubeNamespace)
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	volumes := clientset.PersistentVolumes()
+	ingresses := clientset.Ingresses(kubeNamespace)
 
 	// First check for nfs volume claim
 	nfsClaim, err := volumeClaims.Get(nfsName, metav1.GetOptions{})
@@ -1082,7 +1086,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 
 	var volume *v1.Volume
 	for _, vol := range siaDeployment.Spec.Template.Spec.Volumes {
-		if vol.Name == name {
+		if vol.Name == pvcName {
 			volume = &vol
 			break
 		}
@@ -1171,7 +1175,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		return err
 	}
 	// If it doesn't exist, create it
-	if service == nil || errors.IsNotFound(err) {
+	if secret == nil || errors.IsNotFound(err) {
 		secret = &v1.Secret{}
 		secret.Name = name
 		secret.Namespace = kubeNamespace
@@ -1190,7 +1194,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		log.Println("Found secret " + name)
 	}
 
-	// Finally, check for deployment
+	// Check for deployment
 	deployment, err := deployments.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting deployment from kubernetes: " + err.Error())
@@ -1296,6 +1300,70 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		}
 	} else {
 		log.Println("Found deployment " + name)
+	}
+
+	// Check for ingress
+	ing, err := ingresses.Get(name, metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting minio ingress from kubernetes: " + err.Error())
+		return err
+	}
+	// If it doesn't exist, create it
+	if ing == nil || errors.IsNotFound(err) {
+		ing = &extensions.Ingress{}
+		ing.Name = name
+		ing.Namespace = kubeNamespace
+		ing.Annotations = map[string]string{
+			"kubernetes.io/tls-acme":                   "true",
+			"kubernetes.io/ingress.class":              "nginx",
+			"ingress.kubernetes.io/force-ssl-redirect": "true",
+		}
+		ing.Spec = extensions.IngressSpec{
+			Backend: &extensions.IngressBackend{
+				ServiceName: name,
+				ServicePort: intstr.FromInt(9000),
+			},
+			TLS: []extensions.IngressTLS{extensions.IngressTLS{
+				SecretName: certName,
+				Hosts:      []string{hostname},
+			}},
+			Rules: []extensions.IngressRule{extensions.IngressRule{
+				Host: hostname,
+				IngressRuleValue: extensions.IngressRuleValue{
+					HTTP: &extensions.HTTPIngressRuleValue{
+						Paths: []extensions.HTTPIngressPath{extensions.HTTPIngressPath{
+							Path: "/",
+							Backend: extensions.IngressBackend{
+								ServiceName: name,
+								ServicePort: intstr.FromInt(9000),
+							},
+						}},
+					},
+				},
+			}},
+		}
+		log.Println("Creating ingress " + name)
+		ing, err = ingresses.Create(ing)
+		if err != nil {
+			log.Println("Error creating ingress: " + err.Error())
+			return err
+		}
+	} else {
+		log.Println("Found ingress " + name)
+	}
+
+	// Wait for cert
+	cert, err := secrets.Get(certName, metav1.GetOptions{})
+	if err != nil {
+		log.Println("Error getting cert (" + name + ") from kubernetes: " + err.Error())
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	if len(cert.Data) == 0 {
+		log.Println("Waiting for certificate: " + name)
+		return fmt.Errorf("Waiting for certificate: %s", name)
 	}
 
 	siaNode, err = updateSiaNodeMinioInstancesActivated(siaNode.ID, siaNode.MinioInstancesActivated+1)
