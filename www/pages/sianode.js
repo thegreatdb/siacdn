@@ -68,9 +68,11 @@ SiaNode.getInitialProps = async ctx => {
     authAccount = await client.getAuthAccount();
     if (!authAccount) {
       redirect(ctx, '/login');
+      return { authAccount };
     }
   } catch (err) {
     redirect(ctx, '/login');
+    return { authAccount };
   }
   const siaNode = await client.getSiaNode(id);
   return { authAccount, siaNode };

@@ -42,7 +42,7 @@ const minioCountOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].ma
 
 export default class NewSia extends React.Component {
   state = {
-    selectedCost: -1,
+    selectedCost: '5',
     selectedCount: 0,
     siaError: null,
     siaSubmitting: false,
@@ -80,7 +80,7 @@ export default class NewSia extends React.Component {
 
     const { authTokenID } = this.props;
     const { selectedCost } = this.state;
-    if (selectedCost < 0) {
+    if (!selectedCost) {
       await this.setState({
         siaError: { message: 'You should select a capacity' },
       });
@@ -89,9 +89,7 @@ export default class NewSia extends React.Component {
     await this.setState({ siaError: null, siaSubmitting: true });
     try {
       const client = new Client(authTokenID);
-      const siaNode = await client.createSiaNode(
-        siaCostOptions[selectedCost].key
-      );
+      const siaNode = await client.createSiaNode(parseFloat(selectedCost));
       await this.setState({ siaSubmitting: false, siaNode: siaNode });
     } catch (error) {
       await this.setState({ siaError: error, siaSubmitting: false });
@@ -155,7 +153,6 @@ export default class NewSia extends React.Component {
   render() {
     const { authAccount } = this.props;
     const {
-      selectedCost,
       selectedCount,
       siaSubmitting,
       siaError,

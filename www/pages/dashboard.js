@@ -76,9 +76,11 @@ Dashboard.getInitialProps = async ctx => {
     authAccount = await client.getAuthAccount();
     if (!authAccount) {
       redirect(ctx, '/signup');
+      return { authAccount };
     }
   } catch (err) {
     redirect(ctx, '/signup');
+    return { authAccount };
   }
   const siaNodes = await client.getSiaNodes();
   return { authAccount, siaNodes };
