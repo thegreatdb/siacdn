@@ -25,43 +25,74 @@ const Dashboard = ({ authAccount, siaNodes }) => (
       <Segment padded>
         <Header as="h1">SiaCDN</Header>
         <Card.Group>
-          {siaNodes ? siaNodes.map(siaNode => (
-            <Card key={siaNode.shortcode} fluid href={siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia'} onClick={(ev) => {
-              ev.preventDefault();
-              ev.stopPropagation();
-              Router.push(siaNode.status === 'ready' ? '/sianode?id='+siaNode.id : '/newsia');
-            }}>
-              <Card.Content header={'Sia full node: ' + siaNode.shortcode} />
-              <Card.Content>
-                <Card.Description>
-                  <List>
-                    <List.Item>
-                      <List.Content>
-                        <Icon name="tag" />{' '}
-                        <strong>ID</strong>: {siaNode.id}
-                      </List.Content>
-                    </List.Item>
-                    <List.Item>
-                      <List.Content>
-                        <Icon name="signal" />{' '}
-                        <strong>Status</strong>: {displayStatus[siaNode.status]}
-                      </List.Content>
-                    </List.Item>
-                    <List.Item>
-                      <List.Content>
-                        <Icon name="time" />{' '}
-                        <strong>Created</strong>: <TimeAgo datetime={siaNode.created_time} />
-                      </List.Content>
-                    </List.Item>
-                  </List>
-                </Card.Description>
-              </Card.Content>
-              <Card.Content extra>
-                <Icon name="cloud" />
-                {siaNode.minio_instances_requested} Minio instance{siaNode.minio_instances_requested === 1 ? '' : 's'}
-              </Card.Content>
-            </Card>
-          )) : null}
+          {(siaNodes || []).length > 0 ? (
+            siaNodes.map(siaNode => (
+              <Card
+                key={siaNode.shortcode}
+                fluid
+                href={
+                  siaNode.status === 'ready'
+                    ? '/sianode?id=' + siaNode.id
+                    : '/newsia'
+                }
+                onClick={ev => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  Router.push(
+                    siaNode.status === 'ready'
+                      ? '/sianode?id=' + siaNode.id
+                      : '/newsia'
+                  );
+                }}
+              >
+                <Card.Content header={'Sia full node: ' + siaNode.shortcode} />
+                <Card.Content>
+                  <Card.Description>
+                    <List>
+                      <List.Item>
+                        <List.Content>
+                          <Icon name="tag" /> <strong>ID</strong>: {siaNode.id}
+                        </List.Content>
+                      </List.Item>
+                      <List.Item>
+                        <List.Content>
+                          <Icon name="signal" /> <strong>Status</strong>:{' '}
+                          {displayStatus[siaNode.status]}
+                        </List.Content>
+                      </List.Item>
+                      <List.Item>
+                        <List.Content>
+                          <Icon name="time" /> <strong>Created</strong>:{' '}
+                          <TimeAgo datetime={siaNode.created_time} />
+                        </List.Content>
+                      </List.Item>
+                    </List>
+                  </Card.Description>
+                </Card.Content>
+                <Card.Content extra>
+                  <Icon name="cloud" />
+                  {siaNode.minio_instances_requested} Minio instance{siaNode.minio_instances_requested === 1 ? '' : 's'}
+                </Card.Content>
+              </Card>
+            ))
+          ) : (
+            <div className="centered">
+              <br />
+              <Header as="h2" attached="top" textAlign="center">
+                No Sia nodes yet
+              </Header>
+              <Segment attached textAlign="center" size="huge">
+                Before you can get started storing files in the Sia network,
+                first we need to spin up a new full node. <br />
+                <br />
+                <Link href="/newsia">
+                  <a>Click here to start your first full node now.</a>
+                </Link>
+              </Segment>
+              <br />
+              <br />
+            </div>
+          )}
         </Card.Group>
       </Segment>
     </div>

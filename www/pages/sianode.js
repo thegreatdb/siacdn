@@ -10,6 +10,14 @@ import redirect from '../lib/redirect';
 import Nav from '../components/nav';
 import { displayStatus } from '../lib/fmt';
 
+const instanceArray = siaNode => {
+  var resp = [];
+  for (var i = 1; i <= siaNode.minio_instances_requested; ++i) {
+    resp.append(i);
+  }
+  return resp;
+};
+
 const SiaNode = ({ authAccount, siaNode }) => (
   <HttpsRedirect>
     <Head>
@@ -22,37 +30,68 @@ const SiaNode = ({ authAccount, siaNode }) => (
     </Head>
     <div className="holder">
       <Nav activeItem="sianode" authAccount={authAccount} />
+
       <Segment padded>
-        <Header as="h1">
-          Sia full node: {siaNode.shortcode}
+        <Header as="h2">Sia full node: {siaNode.shortcode}</Header>
+        <List>
+          <List.Item>
+            <List.Content>
+              <Icon name="tag" /> <strong>ID</strong>: {siaNode.id}
+            </List.Content>
+          </List.Item>
+          <List.Item>
+            <List.Content>
+              <Icon name="signal" /> <strong>Status</strong>:{' '}
+              {displayStatus[siaNode.status]}
+            </List.Content>
+          </List.Item>
+          <List.Item>
+            <List.Content>
+              <Icon name="time" /> <strong>Created</strong>:{' '}
+              <TimeAgo datetime={siaNode.created_time} />
+            </List.Content>
+          </List.Item>
+          <List.Item>
+            <List.Content>
+              <Icon name="cloud" /> {siaNode.minio_instances_requested} Minio
+              instance{siaNode.minio_instances_requested === 1 ? '' : 's'}
+            </List.Content>
+          </List.Item>
+        </List>
+      </Segment>
+
+      <Segment padded>
+        <Header as="h2">
+          Minio Node{siaNode.minio_instances_requested === 1 ? '' : 's'}
         </Header>
         <List>
           <List.Item>
             <List.Content>
-              <Icon name="tag" />{' '}
-              <strong>ID</strong>: {siaNode.id}
+              <Icon name="unlock alternate" /> <strong>Minio Access Key</strong>:{' '}
+              {siaNode.minio_access_key}
             </List.Content>
           </List.Item>
           <List.Item>
             <List.Content>
-              <Icon name="signal" />{' '}
-              <strong>Status</strong>: {displayStatus[siaNode.status]}
-            </List.Content>
-          </List.Item>
-          <List.Item>
-            <List.Content>
-              <Icon name="time" />{' '}
-              <strong>Created</strong>: <TimeAgo datetime={siaNode.created_time} />
-            </List.Content>
-          </List.Item>
-          <List.Item>
-            <List.Content>
-              <Icon name="cloud" />{' '}
-              {siaNode.minio_instances_requested} Minio instance{siaNode.minio_instances_requested === 1 ? '' : 's'}
-              <br />{siaNode.minio_access_key}<br />
+              <Icon name="lock" /> <strong>Minio Secret Key</strong>:{' '}
               {siaNode.minio_secret_key}
             </List.Content>
           </List.Item>
+        </List>
+        <List>
+          {instanceArray(siaNode).map(i => (
+            <List.Item key={i}>
+              <List.Content>
+                <Icon name="linkify" />{' '}
+                <a
+                  href={`https://${siaNode.shortcode}-minio${i + 1}.siacdn.com`}
+                  target="_blank"
+                >
+                  https://{siaNode.shortcode}-minio{i + 1}.siacdn.com
+                </a>
+              </List.Content>
+            </List.Item>
+          ))}
         </List>
       </Segment>
     </div>

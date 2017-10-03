@@ -1,7 +1,8 @@
 export const displayStatus = {
   created: '2) Sending specifications to the deployment server...',
   deployed: '3) Waiting for resources from deployment server...',
-  instanced: '4) Initialized Sia node, now downloading a recent blockchain snapshot...',
+  instanced:
+    '4) Initialized Sia node, now downloading a recent blockchain snapshot...',
   snapshotted:
     '5) Finished snapshotting, now downloading the latest blockchain updates...',
   synchronized: '6) Blockchain fully synced. Initializing wallet...',

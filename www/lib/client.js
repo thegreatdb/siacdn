@@ -47,7 +47,11 @@ export default class Client {
 
   async updateSiaNodeInstances(id, instances) {
     const body = { minio_instances_requested: instances };
-    const resp = await this.post('/sianodes/id/' + id, null, JSON.stringify(body));
+    const resp = await this.post(
+      '/sianodes/id/' + id,
+      null,
+      JSON.stringify(body)
+    );
     return resp.sianode;
   }
 

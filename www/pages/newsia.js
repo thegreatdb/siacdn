@@ -23,7 +23,7 @@ import Client from '../lib/client';
 import { displayStatus } from '../lib/fmt';
 
 const siaCostOptions = [
-  { key: 0.02, text: ' 50GB - $0.024/mo', value: '0.02' },
+  //  { key: 0.02, text: ' 50GB - $0.024/mo', value: '0.02' },
   { key: 5, text: ' 5TB - $6/mo', value: '5' },
   { key: 10, text: '10TB - $12/mo', value: '10' },
   { key: 15, text: '15TB - $18/mo', value: '15' },
@@ -36,9 +36,34 @@ const siaCostOptions = [
   { key: 50, text: '50TB - $60/mo', value: '50' },
 ];
 
-const minioCountOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(i => (
-  { key: i, text:  ' ' + i + ' Sia-Enabled Minio Instance' + (i == 1 ? '' : 's') + ' - $' + (i * 10) + '/mo', value: '' + i }
-));
+const minioCountOptions = [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+].map(i => ({
+  key: i,
+  text:
+    ' ' +
+    i +
+    ' Sia-Enabled Minio Instance' +
+    (i == 1 ? '' : 's') +
+    ' - $' +
+    i * 10 +
+    '/mo',
+  value: '' + i,
+}));
 
 export default class NewSia extends React.Component {
   state = {
@@ -132,7 +157,7 @@ export default class NewSia extends React.Component {
     await this.setState({ siaNode });
 
     if (existingSiaNode && !siaNode) {
-      Router.push('/sianode?id='+existingSiaNode.id);
+      Router.push('/sianode?id=' + existingSiaNode.id);
       return;
     }
 
@@ -157,7 +182,7 @@ export default class NewSia extends React.Component {
       siaSubmitting,
       siaError,
       minioSubmitting,
-      minioError
+      minioError,
     } = this.state;
     const hasSiaError = Boolean(siaError);
     const hasMinioError = Boolean(minioError);
@@ -243,24 +268,30 @@ export default class NewSia extends React.Component {
 
           <Segment className={siaNode ? '' : 'disabled'} padded>
             <Header as="h3">Minio Instances</Header>
-            {siaNode ?
-              (siaNode.minio_instances_requested > 0 ?
+            {siaNode ? (
+              siaNode.minio_instances_requested > 0 ? (
                 <Message info>
                   <Message.Header>Setting it up</Message.Header>
                   <Message.Content>
-                    {siaNode.status === 'ready' ?
-                      'Spinning up your Minio instances...' :
-                      'Waiting for Sia node to finish before spinning up your Minio Instances...'}<br />
+                    {siaNode.status === 'ready'
+                      ? 'Spinning up your Minio instances...'
+                      : 'Waiting for Sia node to finish before spinning up your Minio Instances...'}
+                    <br />
                     Requested Count: {siaNode.minio_instances_requested}
                   </Message.Content>
-                </Message> :
+                </Message>
+              ) : (
                 <Form
                   error={hasMinioError}
                   loading={minioSubmitting}
                   onSubmit={this.handleMinioSubmit}
                 >
                   {hasMinioError ? (
-                    <Message header="Whoops!" content={minioError.message} error />
+                    <Message
+                      header="Whoops!"
+                      content={minioError.message}
+                      error
+                    />
                   ) : null}
                   <Form.Field>
                     <label>How many Minio instances to launch?</label>
@@ -272,14 +303,20 @@ export default class NewSia extends React.Component {
                     />
                   </Form.Field>
                   <Button>Start Minio instances</Button>
-                </Form>) :
-              <Message header="Waiting..."
-                       content={siaNode ?
-                         "Waiting for Sia node to start launching." :
-                         "Waiting for Sia node choice."}
-                       info />}
+                </Form>
+              )
+            ) : (
+              <Message
+                header="Waiting..."
+                content={
+                  siaNode
+                    ? 'Waiting for Sia node to start launching.'
+                    : 'Waiting for Sia node choice.'
+                }
+                info
+              />
+            )}
           </Segment>
-
         </div>
       </HttpsRedirect>
     );
