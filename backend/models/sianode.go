@@ -72,16 +72,25 @@ func (sn *SiaNode) Copy() *SiaNode {
 func (sn *SiaNode) SiaClient() (*api.Client, error) {
 	clientset, clusterType, err := kube.KubeClient()
 	if err != nil {
+		log.Println("Error getting kube client to get sia client: " + err.Error())
 		return nil, err
 	}
-	services := clientset.Services(kubeNamespace)
+
+	log.Println("clientset.RESTClient().APIVersion(): " + clientset.CoreV1Client.RESTClient().APIVersion().String())
+
+	log.Println("PRE Getting service " + sn.KubeNameSer())
+	services := clientset.CoreV1Client.Services(kubeNamespace)
 	service, err := services.Get(sn.KubeNameSer(), metav1.GetOptions{})
+	log.Println("POST Getting service " + sn.KubeNameSer())
 	if err != nil {
+		log.Println("Error getting sia node service: " + err.Error())
 		return nil, err
 	}
 	if service == nil {
+		log.Println("Service not found: " + sn.Shortcode)
 		return nil, fmt.Errorf("Service not found: " + sn.Shortcode)
 	}
+	log.Println("Got service " + sn.KubeNameSer())
 	var ip string
 	if clusterType == kube.ClusterTypeExternal {
 		log.Println("Found external cluster, assuming local tunnel. " +

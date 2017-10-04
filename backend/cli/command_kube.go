@@ -148,7 +148,7 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
-	services := clientset.Services(kubeNamespace)
+	services := clientset.CoreV1Client.Services(kubeNamespace)
 	secrets := clientset.Secrets(kubeNamespace)
 
 	// First check for volume claim
@@ -347,6 +347,7 @@ func pollKubeInstanced(clientset *kubernetes.Clientset, siaNode *models.SiaNode)
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
+		log.Println("Could not get Sia client: " + err.Error())
 		return err
 	}
 
@@ -370,6 +371,7 @@ func pollKubeSnapshotted(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 
 	client, err := siaNode.SiaClient()
 	if err != nil {
+		log.Println("Could not get Sia client: " + err.Error())
 		return err
 	}
 
@@ -396,16 +398,20 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 	pods := clientset.Pods(kubeNamespace)
 	secrets := clientset.Secrets(kubeNamespace)
 
+	log.Println("Getting client")
 	client, err := siaNode.SiaClient()
 	if err != nil {
 		return err
 	}
+	log.Println("Got client")
 
+	log.Println("Getting seed " + siaNode.Shortcode)
 	seed, err := getWalletSeed(siaNode.ID)
 	if err != nil {
 		log.Println("Got error checking wallet seed: " + err.Error())
 		return err
 	}
+	log.Println("Got seed")
 
 	// If for whatever reason we found one, we can init with seed
 	if seed != nil && seed.Words != "" {
@@ -439,6 +445,7 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 		}
 	}
 
+	log.Println("Getting secret " + siaNode.KubeNameSec())
 	secret, err := secrets.Get(siaNode.KubeNameSec(), metav1.GetOptions{})
 	if err != nil {
 		log.Println("Error getting secret from kubernetes: " + err.Error())
@@ -888,7 +895,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	mountPath := fmt.Sprintf("/minio%d", instance)
 
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
-	services := clientset.Services(kubeNamespace)
+	services := clientset.CoreV1Client.Services(kubeNamespace)
 	secrets := clientset.Secrets(kubeNamespace)
 	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
 	volumes := clientset.PersistentVolumes()
