@@ -673,8 +673,12 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		log.Println("Could not get balance for " + siaNode.Shortcode + ": " + err.Error())
 		return err
 	}
+
+	amountToSendBack := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
+	log.Printf("Sending back %s from %s", amountToSendBack.String(), siaNode.Shortcode)
+
 	// If it still has a balance, we need to send it back to the prime node
-	if !curResp.ConfirmedSiacoinBalance.IsZero() {
+	if !amountToSendBack.IsZero() {
 		prime, err := prime.Server(clientset)
 		if err != nil {
 			log.Println("Could not get a connection to the prime Sia node: " + err.Error())
@@ -688,7 +692,7 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		}
 
 		var vals = url.Values{}
-		vals.Set("amount", curResp.ConfirmedSiacoinBalance.String())
+		vals.Set("amount", amountToSendBack.String())
 		vals.Set("destination", address.Address.String())
 		var resp api.WalletSiacoinsPOST
 		if err = prime.Post("/wallet/siacoins", vals.Encode(), &resp); err != nil {
@@ -1412,6 +1416,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 			"kubernetes.io/tls-acme":                   "true",
 			"kubernetes.io/ingress.class":              "nginx",
 			"ingress.kubernetes.io/force-ssl-redirect": "true",
+			"ingress.kubernetes.io/proxy-body-size":    "4g",
 		}
 		ing.Spec = extensions.IngressSpec{
 			Backend: &extensions.IngressBackend{
