@@ -147,6 +147,7 @@ const render = () => (
       />
       <link rel="stylesheet" href="/static/css/global.css" />
       <script src="https://js.stripe.com/v3/" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
     </Head>
     <div className="holder">
       <Nav activeItem="signup" authAccount={null} />
@@ -154,7 +155,7 @@ const render = () => (
         <Header as="h1">Sign up</Header>
         <SignupForm />
       </Segment>
-      <Footer activeItem="dashboard" authAccount={authAccount} />
+      <Footer activeItem="dashboard" authAccount={null} />
     </div>
   </HttpsRedirect>
 );

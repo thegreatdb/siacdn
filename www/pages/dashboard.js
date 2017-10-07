@@ -20,6 +20,7 @@ const Dashboard = ({ authAccount, siaNodes }) => (
       />
       <link rel="stylesheet" href="/static/css/global.css" />
       <script src="https://js.stripe.com/v3/" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
     </Head>
     <div className="holder">
       <Nav activeItem="dashboard" authAccount={authAccount} />
