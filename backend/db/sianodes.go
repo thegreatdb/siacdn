@@ -50,8 +50,9 @@ func (db *Database) GetOrphanedSiaNode(accountID uuid.UUID) (*models.SiaNode, er
 	defer db.mu.RUnlock()
 	for _, sn := range db.SiaNodes {
 		if sn.AccountID == accountID &&
-			sn.MinioInstancesActivated == 0 ||
-			sn.MinioInstancesActivated < sn.MinioInstancesRequested {
+			sn.Status != models.SIANODE_STATUS_STOPPED &&
+			(sn.MinioInstancesActivated == 0 ||
+				sn.MinioInstancesActivated < sn.MinioInstancesRequested) {
 			return sn.Copy(), nil
 		}
 	}
@@ -76,8 +77,8 @@ func (db *Database) GetReadyOrphanedSiaNodes() ([]*models.SiaNode, error) {
 	nodes := []*models.SiaNode{}
 	for _, sn := range db.SiaNodes {
 		if sn.Status == models.SIANODE_STATUS_READY &&
-			sn.MinioInstancesActivated == 0 ||
-			sn.MinioInstancesActivated < sn.MinioInstancesRequested {
+			(sn.MinioInstancesActivated == 0 ||
+				sn.MinioInstancesActivated < sn.MinioInstancesRequested) {
 			nodes = append(nodes, sn.Copy())
 		}
 	}

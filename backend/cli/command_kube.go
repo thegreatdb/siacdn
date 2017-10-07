@@ -976,7 +976,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	ingresses := clientset.Ingresses(kubeNamespace)
 
 	if siaNode.Status != models.SIANODE_STATUS_READY {
-		log.Printf("Waiting for sianode %s status to be: %s", siaNode.Shortcode, models.SIANODE_STATUS_READY)
+		log.Printf("Waiting for sianode %s status to be: %s (currently: %s)", siaNode.Shortcode, models.SIANODE_STATUS_READY, siaNode.Status)
 		return nil
 	}
 
