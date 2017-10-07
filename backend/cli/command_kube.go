@@ -703,6 +703,18 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		}
 	}
 
+	log.Println("Getting new wallet balance before stopping: " + siaNode.Shortcode)
+	if err = client.Get("/wallet", &curResp); err != nil {
+		log.Println("Could not get balance for " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+	if !curResp.UnconfirmedOutgoingSiacoins.IsZero() {
+		log.Printf("Found %s outgoing siacoins for %s, waiting...\n",
+			curResp.UnconfirmedOutgoingSiacoins.String(),
+			siaNode.Shortcode)
+		return nil
+	}
+
 	for i := 0; i < siaNode.MinioInstancesRequested; i++ {
 		if err = deleteMinioInstance(clientset, siaNode, i); err != nil {
 			log.Println("Could not delete minio instance: " + err.Error())
