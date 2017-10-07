@@ -25,10 +25,6 @@ func (s *HTTPDServer) handleCreateSiaNode(w http.ResponseWriter, r *http.Request
 		s.JsonErr(w, "You must be authenticated to access this resource")
 		return
 	}
-	if account.Name != "Eric Florenzano" {
-		s.JsonErr(w, "We are not live yet, please check back soon")
-		return
-	}
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
