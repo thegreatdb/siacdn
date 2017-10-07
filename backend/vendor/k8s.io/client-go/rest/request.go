@@ -1147,42 +1147,30 @@ func (r Result) StatusCode(statusCode *int) Result {
 // If the returned object is of type Status and has .Status != StatusSuccess, the
 // additional information in Status will be used to enrich the error.
 func (r Result) Into(obj runtime.Object) error {
-	log.Println("A")
 	if r.err != nil {
-		log.Println("B")
 		// Check whether the result has a Status object in the body and prefer that.
 		return r.Error()
 	}
-	log.Println("C")
 	if r.decoder == nil {
-		log.Println("D")
 		return fmt.Errorf("serializer for %s doesn't exist", r.contentType)
 	}
-	log.Println("E")
 	if len(r.body) == 0 {
-		log.Println("F")
 		return fmt.Errorf("0-length response")
 	}
-	log.Println("G")
 
 	out, _, err := r.decoder.Decode(r.body, nil, obj)
-	log.Println("H")
 	if err != nil || out == obj {
-		log.Println("I")
 		return err
 	}
-	log.Println("J")
 	// if a different object is returned, see if it is Status and avoid double decoding
 	// the object.
 	switch t := out.(type) {
 	case *metav1.Status:
 		// any status besides StatusSuccess is considered an error.
 		if t.Status != metav1.StatusSuccess {
-			log.Println("K")
 			return errors.FromObject(t)
 		}
 	}
-	log.Println("L")
 	return nil
 }
 
