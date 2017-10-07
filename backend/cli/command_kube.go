@@ -400,20 +400,16 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 	pods := clientset.Pods(kubeNamespace)
 	secrets := clientset.Secrets(kubeNamespace)
 
-	log.Println("Getting client")
 	client, err := siaNode.SiaClient()
 	if err != nil {
 		return err
 	}
-	log.Println("Got client")
 
-	log.Println("Getting seed " + siaNode.Shortcode)
 	seed, err := getWalletSeed(siaNode.ID)
 	if err != nil {
 		log.Println("Got error checking wallet seed: " + err.Error())
 		return err
 	}
-	log.Println("Got seed")
 
 	// If for whatever reason we found one, we can init with seed
 	if seed != nil && seed.Words != "" {
@@ -425,7 +421,6 @@ func pollKubeSynchronized(clientset *kubernetes.Clientset, siaNode *models.SiaNo
 			log.Println("Got error initializing wallet: " + err.Error())
 			return err
 		}
-		log.Println("Got response:", resp)
 	} else {
 		var resp api.WalletInitPOST
 		vals := url.Values{}
@@ -673,6 +668,7 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 	}
 
 	var curResp api.WalletGET
+	log.Println("Getting current wallet balance before stopping: " + siaNode.Shortcode)
 	if err = client.Get("/wallet", &curResp); err != nil {
 		log.Println("Could not get balance for " + siaNode.Shortcode + ": " + err.Error())
 		return err
@@ -709,19 +705,19 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 	}
 
 	log.Println("Deleting minio deployment: " + siaNode.KubeNameDep())
-	if err = deployments.Delete(siaNode.KubeNameDep(), nil); err != nil {
+	if err = deployments.Delete(siaNode.KubeNameDep(), nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio secret: " + siaNode.KubeNameSec())
-	if err = secrets.Delete(siaNode.KubeNameSec(), nil); err != nil {
+	if err = secrets.Delete(siaNode.KubeNameSec(), nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio service: " + siaNode.KubeNameSer())
-	if err = services.Delete(siaNode.KubeNameSer(), nil); err != nil {
+	if err = services.Delete(siaNode.KubeNameSer(), nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio persistent volume claim: " + siaNode.KubeNameVol())
-	if err = volumeClaims.Delete(siaNode.KubeNameVol(), nil); err != nil {
+	if err = volumeClaims.Delete(siaNode.KubeNameVol(), nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
@@ -980,10 +976,12 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	ingresses := clientset.Ingresses(kubeNamespace)
 
 	if siaNode.Status != models.SIANODE_STATUS_READY {
-		return fmt.Errorf("Waiting for sianode status to be: %s", models.SIANODE_STATUS_READY)
+		log.Printf("Waiting for sianode %s status to be: %s", siaNode.Shortcode, models.SIANODE_STATUS_READY)
+		return nil
 	}
 
 	// First check for nfs volume claim
+	log.Println("Checking NFS volume claim: " + nfsName)
 	nfsClaim, err := volumeClaims.Get(nfsName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting volume claim from kubernetes: " + err.Error())
@@ -1013,6 +1011,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Check for the NFS service
+	log.Println("Checking NFS service: " + nfsName)
 	nfsService, err := services.Get(nfsName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting service from kubernetes: " + err.Error())
@@ -1043,6 +1042,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Now check for nfs deployment
+	log.Println("Checking NFS deployment: " + nfsName)
 	nfsDeployment, err := deployments.Get(nfsName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting deployment from kubernetes: " + err.Error())
@@ -1097,6 +1097,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Check for the Sia persistent volume
+	log.Println("Checking minio persistent volume: " + pvName)
 	pv, err := volumes.Get(pvName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting persistent volume from kubernetes: " + err.Error())
@@ -1133,6 +1134,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Now check for minio volume claim
+	log.Println("Checking minio persistent volume claim: " + pvcName)
 	claim, err := volumeClaims.Get(pvcName, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting volume claim from kubernetes: " + err.Error())
@@ -1230,6 +1232,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Now check for service
+	log.Println("Checking minio service: " + name)
 	service, err := services.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting minio service from kubernetes: " + err.Error())
@@ -1258,6 +1261,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Check for secret
+	log.Println("Checking minio secret: " + name)
 	secret, err := secrets.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting secret from kubernetes: " + err.Error())
@@ -1284,6 +1288,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Check for deployment
+	log.Println("Checking minio deployment: " + name)
 	deployment, err := deployments.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting deployment from kubernetes: " + err.Error())
@@ -1392,6 +1397,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Check for ingress
+	log.Println("Checking minio ingress: " + name)
 	ing, err := ingresses.Get(name, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		log.Println("Error getting minio ingress from kubernetes: " + err.Error())
@@ -1442,6 +1448,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	// Wait for cert
+	log.Println("Checking minio cert: " + certName)
 	cert, err := secrets.Get(certName, metav1.GetOptions{})
 	if err != nil {
 		log.Println("Error getting cert (" + name + ") from kubernetes: " + err.Error())
@@ -1479,19 +1486,19 @@ func deleteMinioInstance(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 	ingresses := clientset.Ingresses(kubeNamespace)
 
 	log.Println("Deleting minio ingress: " + name)
-	if err := ingresses.Delete(name, nil); err != nil {
+	if err := ingresses.Delete(name, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio deployment: " + name)
-	if err := deployments.Delete(nfsName, nil); err != nil {
+	if err := deployments.Delete(nfsName, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio secret: " + name)
-	if err := secrets.Delete(name, nil); err != nil {
+	if err := secrets.Delete(name, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio service: " + name)
-	if err := services.Delete(name, nil); err != nil {
+	if err := services.Delete(name, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
@@ -1543,23 +1550,23 @@ func deleteMinioInstance(clientset *kubernetes.Clientset, siaNode *models.SiaNod
 	}
 
 	log.Println("Deleting minio NFS volume claim: " + pvcName)
-	if err = volumeClaims.Delete(pvcName, nil); err != nil {
+	if err = volumeClaims.Delete(pvcName, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio NFS volume: " + pvName)
-	if err = volumes.Delete(pvName, nil); err != nil {
+	if err = volumes.Delete(pvName, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio NFS deployment: " + nfsName)
-	if err = deployments.Delete(nfsName, nil); err != nil {
+	if err = deployments.Delete(nfsName, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio NFS service: " + nfsName)
-	if err = services.Delete(nfsName, nil); err != nil {
+	if err = services.Delete(nfsName, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	log.Println("Deleting minio NFS volume claim: " + nfsName)
-	if err = volumeClaims.Delete(nfsName, nil); err != nil {
+	if err = volumeClaims.Delete(nfsName, nil); err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 

@@ -77,12 +77,8 @@ func (sn *SiaNode) SiaClient() (*api.Client, error) {
 		return nil, err
 	}
 
-	log.Println("clientset.RESTClient().APIVersion(): " + clientset.CoreV1Client.RESTClient().APIVersion().String())
-
-	log.Println("PRE Getting service " + sn.KubeNameSer())
 	services := clientset.CoreV1Client.Services(kubeNamespace)
 	service, err := services.Get(sn.KubeNameSer(), metav1.GetOptions{})
-	log.Println("POST Getting service " + sn.KubeNameSer())
 	if err != nil {
 		log.Println("Error getting sia node service: " + err.Error())
 		return nil, err
@@ -145,7 +141,7 @@ func (sn *SiaNode) Pending() bool {
 	switch sn.Status {
 	case SIANODE_STATUS_READY,
 		SIANODE_STATUS_STOPPED,
-		SIANODE_STATUS_STOPPING,
+		//SIANODE_STATUS_STOPPING,
 		SIANODE_STATUS_DEPLETED,
 		SIANODE_STATUS_ERROR:
 		return false
