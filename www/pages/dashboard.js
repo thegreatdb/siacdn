@@ -39,7 +39,7 @@ const Dashboard = ({ authAccount, siaNodes }) => (
                   ev.preventDefault();
                   ev.stopPropagation();
                   Router.push(
-                    siaNode.status === 'ready'
+                    (siaNode.status === 'ready' || siaNode.status === 'stopping')
                       ? '/sianode?id=' + siaNode.id
                       : '/newsia'
                   );

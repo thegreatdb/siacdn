@@ -5,7 +5,7 @@ export default class Client {
   constructor(authTokenID) {
     this.authTokenID = authTokenID;
     this.authAccount = null;
-    this.base = 'https://api.siacdn.com';
+    this.base = process.env.NODE_ENV === 'production' ? 'https://api.siacdn.com' : 'http://localhost:9095';
   }
 
   setAuthTokenID(id) {
@@ -70,6 +70,11 @@ export default class Client {
     return resp.sianode;
   }
 
+  async deleteSiaNode(id) {
+    const resp = await this.del('/sianodes/id/' + id);
+    return resp.status;
+  }
+
   // Supporting and utility functions follow
 
   headers() {
@@ -96,6 +101,13 @@ export default class Client {
     if (body) {
       opts['body'] = body; // TODO: JSON.stringify if not string already
     }
+    return fetchJSON(url, opts);
+  }
+
+  del(path, params) {
+    const url =
+      this.base + path + (params ? queryString.stringify(params) : '');
+    const opts = { headers: this.headers(), method: 'delete' };
     return fetchJSON(url, opts);
   }
 

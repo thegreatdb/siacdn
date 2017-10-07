@@ -15,6 +15,7 @@ export const displayStatus = {
   configured:
     '11) Negotiating storage contracts on your behalf. This can take a while (Sia team working to improve this)...',
   ready: 'Sia node is up and running!',
+  stopping: 'Stopping and tearing down.',
   stopped: 'Stopped.',
   depleted: 'Insufficient funds to continue.',
   error: 'Errored.',

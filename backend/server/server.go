@@ -57,6 +57,7 @@ func (s *HTTPDServer) makeRouter() *httprouter.Router {
 	r.POST("/sianodes", s.handleCreateSiaNode)
 	r.POST("/sianodes/id/:id", s.handleUpdateSiaNode)
 	r.GET("/sianodes/id/:id", s.handleGetSiaNode)
+	r.DELETE("/sianodes/id/:id", s.handleDeleteSiaNode)
 	r.POST("/sianodes/status", s.handleUpdateSiaNodeStatus)
 	r.GET("/sianodes/account", s.handleGetSiaNodesByAccount)
 	r.GET("/sianodes/orphaned/first", s.handleGetOrphanedSiaNode)

@@ -135,6 +135,8 @@ func pollKube(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
 		go pollKubeConfirmed(clientset, siaNode)
 	case models.SIANODE_STATUS_CONFIGURED:
 		go pollKubeConfigured(clientset, siaNode)
+	case models.SIANODE_STATUS_STOPPING:
+		go pollKubeStopping(clientset, siaNode)
 	default:
 		log.Println("Unknown status: " + siaNode.Status)
 	}
@@ -652,6 +654,82 @@ func pollKubeConfigured(clientset *kubernetes.Clientset, siaNode *models.SiaNode
 	}
 
 	return nil
+}
+
+func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) error {
+	log.Println("PollKubeStopping: " + siaNode.Shortcode)
+	StartFlight(siaFlightPrefix, siaNode)
+	defer StopFlight(siaFlightPrefix, siaNode)
+
+	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
+	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
+	services := clientset.CoreV1Client.Services(kubeNamespace)
+	secrets := clientset.Secrets(kubeNamespace)
+
+	client, err := siaNode.SiaClient()
+	if err != nil {
+		log.Println("Could not get a connection to the sia node" + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+
+	var curResp api.WalletGET
+	if err = client.Get("/wallet", &curResp); err != nil {
+		log.Println("Could not get balance for " + siaNode.Shortcode + ": " + err.Error())
+		return err
+	}
+	// If it still has a balance, we need to send it back to the prime node
+	if !curResp.ConfirmedSiacoinBalance.IsZero() {
+		prime, err := prime.Server(clientset)
+		if err != nil {
+			log.Println("Could not get a connection to the prime Sia node: " + err.Error())
+			return err
+		}
+
+		var address api.WalletAddressGET
+		if err = prime.Get("/wallet/address", &address); err != nil {
+			log.Println("Could not get an address to " + siaNode.Shortcode + ": " + err.Error())
+			return err
+		}
+
+		var vals = url.Values{}
+		vals.Set("amount", curResp.ConfirmedSiacoinBalance.String())
+		vals.Set("destination", address.Address.String())
+		var resp api.WalletSiacoinsPOST
+		if err = prime.Post("/wallet/siacoins", vals.Encode(), &resp); err != nil {
+			log.Println("Could not send coins to prime node: " + err.Error())
+			return err
+		}
+	}
+
+	for i := 0; i < siaNode.MinioInstancesRequested; i++ {
+		if err = deleteMinioInstance(clientset, siaNode, i); err != nil {
+			log.Println("Could not delete minio instance: " + err.Error())
+			return err
+		}
+	}
+
+	log.Println("Deleting minio deployment: " + siaNode.KubeNameDep())
+	if err = deployments.Delete(siaNode.KubeNameDep(), nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio secret: " + siaNode.KubeNameSec())
+	if err = secrets.Delete(siaNode.KubeNameSec(), nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio service: " + siaNode.KubeNameSer())
+	if err = services.Delete(siaNode.KubeNameSer(), nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio persistent volume claim: " + siaNode.KubeNameVol())
+	if err = volumeClaims.Delete(siaNode.KubeNameVol(), nil); err != nil {
+		return err
+	}
+
+	_, err = updateSiaNodeStatus(siaNode.ID, models.SIANODE_STATUS_STOPPED)
+	if err != nil {
+		log.Println("Could not update the SiaNode status to stopped: " + err.Error())
+		return err
+	}
 
 	return nil
 }
@@ -1384,5 +1462,106 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 
 	log.Println("Successfully activated Minio instance " + name + "!")
+	return nil
+}
+
+func deleteMinioInstance(clientset *kubernetes.Clientset, siaNode *models.SiaNode, instance int) error {
+	name := siaNode.KubeNameMinio(instance)
+	nfsName := siaNode.KubeNameMinioNFS(instance)
+	pvName := nfsName + "-pv"
+	pvcName := nfsName + "-pvc"
+
+	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
+	services := clientset.CoreV1Client.Services(kubeNamespace)
+	secrets := clientset.Secrets(kubeNamespace)
+	volumeClaims := clientset.PersistentVolumeClaims(kubeNamespace)
+	volumes := clientset.PersistentVolumes()
+	ingresses := clientset.Ingresses(kubeNamespace)
+
+	log.Println("Deleting minio ingress: " + name)
+	if err := ingresses.Delete(name, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio deployment: " + name)
+	if err := deployments.Delete(nfsName, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio secret: " + name)
+	if err := secrets.Delete(name, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio service: " + name)
+	if err := services.Delete(name, nil); err != nil {
+		return err
+	}
+
+	// Now check the sia deployment to make sure it doesn't mount the minio volume
+	siaDeployment, err := deployments.Get(siaNode.KubeNameDep(), metav1.GetOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		log.Println("Error getting deployment from kubernetes: " + err.Error())
+		return err
+	}
+	// If there was no error, we have a deployment to modify
+	if err == nil {
+		siaDeploymentChanged := false
+
+		newVolumes := make([]v1.Volume, 0, len(siaDeployment.Spec.Template.Spec.Volumes))
+		for _, vol := range siaDeployment.Spec.Template.Spec.Volumes {
+			if vol.Name != pvcName {
+				newVolumes = append(newVolumes, vol)
+			}
+		}
+		// If it doesn't include the volume in the spec, add it
+		if len(newVolumes) != len(siaDeployment.Spec.Template.Spec.Volumes) {
+			siaDeploymentChanged = true
+		}
+
+		newContainers := make([]v1.Container, 0, len(siaDeployment.Spec.Template.Spec.Containers))
+		for _, container := range siaDeployment.Spec.Template.Spec.Containers {
+			newVolumeMounts := make([]v1.VolumeMount, 0, len(container.VolumeMounts))
+			for _, vm := range container.VolumeMounts {
+				if vm.Name != pvcName {
+					newVolumeMounts = append(newVolumeMounts, vm)
+				}
+			}
+			if len(newVolumeMounts) != len(container.VolumeMounts) {
+				container.VolumeMounts = newVolumeMounts
+				siaDeploymentChanged = true
+			}
+			newContainers = append(newContainers, container)
+		}
+
+		if siaDeploymentChanged {
+			log.Println("Changing the Sia deployment in the process of deleting Minio " + name)
+			siaDeployment.Spec.Template.Spec.Containers = newContainers
+			siaDeployment, err = deployments.Update(siaDeployment)
+			if err != nil {
+				log.Println("Error updating sia deployment with new volume info in kubernetes: " + err.Error())
+				return err
+			}
+		}
+	}
+
+	log.Println("Deleting minio NFS volume claim: " + pvcName)
+	if err = volumeClaims.Delete(pvcName, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio NFS volume: " + pvName)
+	if err = volumes.Delete(pvName, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio NFS deployment: " + nfsName)
+	if err = deployments.Delete(nfsName, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio NFS service: " + nfsName)
+	if err = services.Delete(nfsName, nil); err != nil {
+		return err
+	}
+	log.Println("Deleting minio NFS volume claim: " + nfsName)
+	if err = volumeClaims.Delete(nfsName, nil); err != nil {
+		return err
+	}
+
 	return nil
 }

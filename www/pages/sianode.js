@@ -13,12 +13,12 @@ import { displayStatus } from '../lib/fmt';
 const instanceArray = siaNode => {
   var resp = [];
   for (var i = 1; i <= siaNode.minio_instances_requested; ++i) {
-    resp.append(i);
+    resp.push(i);
   }
   return resp;
 };
 
-const SiaNode = ({ authAccount, siaNode }) => (
+const SiaNode = ({ authTokenID, authAccount, siaNode }) => (
   <HttpsRedirect>
     <Head>
       <link
@@ -94,6 +94,23 @@ const SiaNode = ({ authAccount, siaNode }) => (
           ))}
         </List>
       </Segment>
+
+      {(siaNode.status === 'stopping' || siaNode.status === 'stopped') ?
+        <Button disabled>Deleting...</Button> :
+        <Button onClick={async (ev) => {
+          if (!confirm('Are you sure you want to delete this Sia node?')) {
+            return;
+          }
+          const client = new Client(authTokenID);
+          try {
+            await client.deleteSiaNode(siaNode.id);
+            Router.push('/dashboard');
+          } catch (error) {
+            alert(error);
+          }
+        }}>
+          Delete SiaNode
+        </Button>}
     </div>
   </HttpsRedirect>
 );
@@ -114,7 +131,7 @@ SiaNode.getInitialProps = async ctx => {
     return { authAccount };
   }
   const siaNode = await client.getSiaNode(id);
-  return { authAccount, siaNode };
+  return { authTokenID, authAccount, siaNode };
 };
 
 export default SiaNode;

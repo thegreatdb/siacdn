@@ -31,6 +31,7 @@ const SIANODE_STATUS_FUNDED = "funded"             // Account has received initi
 const SIANODE_STATUS_CONFIRMED = "confirmed"       // Funding has been confirmed by the server
 const SIANODE_STATUS_CONFIGURED = "configured"     // Allowance has been set
 const SIANODE_STATUS_READY = "ready"               // Everything is ready to go and contracts are all set
+const SIANODE_STATUS_STOPPING = "stopping"         // Stop has been requested
 const SIANODE_STATUS_STOPPED = "stopped"           // A user or administrator has stopped the node
 const SIANODE_STATUS_DEPLETED = "depleted"         // All the SiaCoins in the accoint have been used up
 const SIANODE_STATUS_ERROR = "error"               // An error has occurred in the process
@@ -130,6 +131,7 @@ func (sn *SiaNode) ValidateStatus() error {
 		SIANODE_STATUS_CONFIRMED,
 		SIANODE_STATUS_CONFIGURED,
 		SIANODE_STATUS_READY,
+		SIANODE_STATUS_STOPPING,
 		SIANODE_STATUS_STOPPED,
 		SIANODE_STATUS_DEPLETED,
 		SIANODE_STATUS_ERROR:
@@ -143,6 +145,7 @@ func (sn *SiaNode) Pending() bool {
 	switch sn.Status {
 	case SIANODE_STATUS_READY,
 		SIANODE_STATUS_STOPPED,
+		SIANODE_STATUS_STOPPING,
 		SIANODE_STATUS_DEPLETED,
 		SIANODE_STATUS_ERROR:
 		return false
