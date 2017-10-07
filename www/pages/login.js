@@ -6,6 +6,7 @@ import HttpsRedirect from 'react-https-redirect';
 import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import Nav from '../components/nav';
+import Footer from '../components/footer';
 
 export default class LoginForm extends React.Component {
   state = { error: null, submitting: false, authAccount: null };
@@ -73,6 +74,7 @@ export default class LoginForm extends React.Component {
               <Button type="submit">Log in</Button>
             </Form>
           </Segment>
+          <Footer activeItem="login" authAccount={null} />
         </div>
       </HttpsRedirect>
     );

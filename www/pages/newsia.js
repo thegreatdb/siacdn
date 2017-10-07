@@ -18,6 +18,7 @@ import {
   Message,
 } from 'semantic-ui-react';
 import Nav from '../components/nav';
+import Footer from '../components/footer';
 import redirect from '../lib/redirect';
 import Client from '../lib/client';
 import { displayStatus } from '../lib/fmt';
@@ -317,6 +318,8 @@ export default class NewSia extends React.Component {
               />
             )}
           </Segment>
+
+          <Footer activeItem="newsia" authAccount={authAccount} />
         </div>
       </HttpsRedirect>
     );

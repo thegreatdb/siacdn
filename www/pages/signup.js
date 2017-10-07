@@ -14,6 +14,7 @@ import {
   injectStripe,
 } from 'react-stripe-elements';
 import Nav from '../components/nav';
+import Footer from '../components/footer';
 
 const IS_SERVER = typeof window === 'undefined';
 
@@ -153,6 +154,7 @@ const render = () => (
         <Header as="h1">Sign up</Header>
         <SignupForm />
       </Segment>
+      <Footer activeItem="dashboard" authAccount={authAccount} />
     </div>
   </HttpsRedirect>
 );

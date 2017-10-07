@@ -13,6 +13,7 @@ import {
   Icon,
 } from 'semantic-ui-react';
 import Nav from '../components/nav';
+import Footer from '../components/footer';
 import Client from '../lib/client';
 
 const Index = ({ authAccount }) => (
@@ -126,6 +127,7 @@ const Index = ({ authAccount }) => (
           <Button primary>Go to your dashboard</Button>
         </Link>
       </Segment>
+      <Footer activeItem="index" authAccount={authAccount} />
     </div>
   </HttpsRedirect>
 );

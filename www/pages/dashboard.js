@@ -8,6 +8,7 @@ import HttpsRedirect from 'react-https-redirect';
 import Client from '../lib/client';
 import redirect from '../lib/redirect';
 import Nav from '../components/nav';
+import Footer from '../components/footer';
 import { displayStatus } from '../lib/fmt';
 
 const Dashboard = ({ authAccount, siaNodes }) => (
@@ -95,6 +96,7 @@ const Dashboard = ({ authAccount, siaNodes }) => (
           )}
         </Card.Group>
       </Segment>
+      <Footer activeItem="dashboard" authAccount={authAccount} />
     </div>
   </HttpsRedirect>
 );
