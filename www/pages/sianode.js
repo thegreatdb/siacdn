@@ -87,7 +87,7 @@ const SiaNode = ({ authTokenID, authAccount, siaNode }) => (
                   href={`https://${siaNode.shortcode}-minio${i}.siacdn.com`}
                   target="_blank"
                 >
-                  https://{siaNode.shortcode}-minio{i + 1}.siacdn.com
+                  https://{siaNode.shortcode}-minio{i}.siacdn.com
                 </a>
               </List.Content>
             </List.Item>
