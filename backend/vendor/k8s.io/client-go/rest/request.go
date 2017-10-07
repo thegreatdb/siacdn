@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"net/url"
@@ -888,20 +887,15 @@ func (r *Request) request(fn func(*http.Request, *http.Response)) error {
 //  * If the server responds with a status: *errors.StatusError or *errors.UnexpectedObjectError
 //  * http.Client.Do errors are returned directly.
 func (r *Request) Do() Result {
-	log.Println("1")
 	r.tryThrottle()
-	log.Println("2")
 
 	var result Result
 	err := r.request(func(req *http.Request, resp *http.Response) {
 		result = r.transformResponse(resp, req)
 	})
-	log.Println("3")
 	if err != nil {
-		log.Println("4")
 		return Result{err: err}
 	}
-	log.Println("5")
 	return result
 }
 
