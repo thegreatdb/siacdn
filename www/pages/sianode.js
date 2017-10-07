@@ -84,7 +84,7 @@ const SiaNode = ({ authTokenID, authAccount, siaNode }) => (
               <List.Content>
                 <Icon name="linkify" />{' '}
                 <a
-                  href={`https://${siaNode.shortcode}-minio${i + 1}.siacdn.com`}
+                  href={`https://${siaNode.shortcode}-minio${i}.siacdn.com`}
                   target="_blank"
                 >
                   https://{siaNode.shortcode}-minio{i + 1}.siacdn.com
