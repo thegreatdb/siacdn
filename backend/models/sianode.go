@@ -174,11 +174,11 @@ func (sn *SiaNode) KubeNameSec() string {
 }
 
 func (sn *SiaNode) KubeNameMinio(instance int) string {
-	return fmt.Sprintf("siacdn-%s-minio%d", sn.Shortcode, instance)
+	return fmt.Sprintf("siacdn-%s-minio%d", sn.Shortcode, instance+1)
 }
 
 func (sn *SiaNode) KubeNameMinioNFS(instance int) string {
-	return fmt.Sprintf("siacdn-%s-minio%d-nfs", sn.Shortcode, instance)
+	return fmt.Sprintf("siacdn-%s-minio%d-nfs", sn.Shortcode, instance+1)
 }
 
 func (sn *SiaNode) MinioHostname(instance int) string {

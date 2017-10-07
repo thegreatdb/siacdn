@@ -970,7 +970,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	pvName := nfsName + "-pv"
 	pvcName := nfsName + "-pvc"
 	certName := fmt.Sprintf("%s-cert", name)
-	mountPath := fmt.Sprintf("/minio%d", instance)
+	mountPath := fmt.Sprintf("/minio%d", instance+1)
 
 	deployments := clientset.AppsV1beta1Client.Deployments(kubeNamespace)
 	services := clientset.CoreV1Client.Services(kubeNamespace)
