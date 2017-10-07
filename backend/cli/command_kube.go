@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/NebulousLabs/Sia/api"
+	"github.com/NebulousLabs/Sia/types"
 	"github.com/google/uuid"
 	"github.com/thegreatdb/siacdn/backend/kube"
 	"github.com/thegreatdb/siacdn/backend/models"
@@ -676,11 +677,14 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		return err
 	}
 
-	total := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
-	log.Printf("Sending back %s from %s", total.String(), siaNode.Shortcode)
+	total := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins).Sub(types.SiacoinPrecision.Mul64(10))
+	if total.Cmp64(0) < 0 {
+		total = types.NewCurrency64(0)
+	}
 
 	// If it still has a balance, we need to send it back to the prime node
 	if !total.IsZero() {
+		log.Printf("Sending back %s from %s", total.String(), siaNode.Shortcode)
 		prime, err := prime.Server(clientset)
 		if err != nil {
 			log.Println("Could not get a connection to the prime Sia node: " + err.Error())
@@ -710,6 +714,10 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 	}
 	total = curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
 	log.Printf("Got wallet balance of %s for %s\n", total.String(), siaNode.Shortcode)
+	total = total.Sub(types.SiacoinPrecision.Mul64(10))
+	if total.Cmp64(0) < 0 {
+		total = types.NewCurrency64(0)
+	}
 	if !total.IsZero() {
 		log.Printf("Found outgoing siacoins for %s, waiting...\n", siaNode.Shortcode)
 		return nil
