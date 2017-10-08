@@ -33,22 +33,25 @@ const Nav = ({ activeItem, authAccount }) => (
           </Menu.Item>
         ) : null}
         <Menu.Item>
-          {authAccount ? null :
+          {authAccount ? null : (
             <Button onClick={clickRouter('/signup')} primary>
               Sign up
-            </Button>}
+            </Button>
+          )}
           {authAccount ? null : <span className="sep">or</span>}
-          {authAccount ?
-            <Button onClick={clickRouter('/logout')}>Logout</Button> :
+          {authAccount ? (
+            <Button onClick={clickRouter('/logout')}>Logout</Button>
+          ) : (
             <Button onClick={clickRouter('/login')} primary>
               Login
-            </Button>}
+            </Button>
+          )}
         </Menu.Item>
       </Menu.Menu>
     )}
     <style jsx>{`
       .sep {
-        padding: 0 .5em 0 .5em;
+        padding: 0 0.5em 0 0.5em;
       }
     `}</style>
   </Menu>

@@ -97,22 +97,26 @@ const SiaNode = ({ authTokenID, authAccount, siaNode }) => (
         </List>
       </Segment>
 
-      {(siaNode.status === 'stopping' || siaNode.status === 'stopped') ?
-        <Button disabled>Deleting...</Button> :
-        <Button onClick={async (ev) => {
-          if (!confirm('Are you sure you want to delete this Sia node?')) {
-            return;
-          }
-          const client = new Client(authTokenID);
-          try {
-            await client.deleteSiaNode(siaNode.id);
-            Router.push('/dashboard');
-          } catch (error) {
-            alert(error);
-          }
-        }}>
+      {siaNode.status === 'stopping' || siaNode.status === 'stopped' ? (
+        <Button disabled>Deleting...</Button>
+      ) : (
+        <Button
+          onClick={async ev => {
+            if (!confirm('Are you sure you want to delete this Sia node?')) {
+              return;
+            }
+            const client = new Client(authTokenID);
+            try {
+              await client.deleteSiaNode(siaNode.id);
+              Router.push('/dashboard');
+            } catch (error) {
+              alert(error);
+            }
+          }}
+        >
           Delete SiaNode
-        </Button>}
+        </Button>
+      )}
 
       <Footer activeItem="dashboard" authAccount={authAccount} />
     </div>

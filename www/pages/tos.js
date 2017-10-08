@@ -347,7 +347,7 @@ export default class TermsOfService extends React.Component {
             <p>
               Questions or comments about the Service may be directed to us at
               the email address{' '}
-              <a href="mailto:support@app.net">support@app.net</a>.
+              <a href="mailto:eric@siacdn.com">eric@siacdn.com</a>.
             </p>
           </Segment>
           <Footer activeItem="tos" authAccount={null} />

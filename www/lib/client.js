@@ -5,7 +5,10 @@ export default class Client {
   constructor(authTokenID) {
     this.authTokenID = authTokenID;
     this.authAccount = null;
-    this.base = process.env.NODE_ENV === 'production' ? 'https://api.siacdn.com' : 'http://localhost:9095';
+    this.base =
+      process.env.NODE_ENV === 'production'
+        ? 'https://api.siacdn.com'
+        : 'http://localhost:9095';
   }
 
   setAuthTokenID(id) {
