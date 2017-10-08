@@ -39,7 +39,7 @@ var nfsStorageClass = ""
 var minioDefaultStorage = resource.MustParse("100Gi")
 
 const siaHosts = 40
-const siaNeededContracts = 20  // Once we have half the hosts, we can confirm it
+const siaNeededContracts = 30  // Once we have enough hosts, we can confirm it
 const siaContractPeriod = 4380 // Number of 10m intervals in 1 month
 const siaRenewWindow = 400
 const siaFlightPrefix = "sia-"
