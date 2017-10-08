@@ -5,4 +5,4 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/base
 
-kube delete pod -l app=siacdn-www
+$KUBE delete pod -l app=siacdn-www
