@@ -43,6 +43,7 @@ const siaNeededContracts = 20  // Once we have half the hosts, we can confirm it
 const siaContractPeriod = 4380 // Number of 10m intervals in 1 month
 const siaRenewWindow = 400
 const siaFlightPrefix = "sia-"
+const siaMinerFees = 12
 const minioFlightPrefix = "minio-"
 
 var securityContextPrivileged bool = true
@@ -677,8 +678,8 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		return err
 	}
 
-	total := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins).Sub(types.SiacoinPrecision.Mul64(10))
-	if total.Cmp64(0) < 0 {
+	total := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
+	if total.Cmp(types.SiacoinPrecision.Mul64(siaMinerFees)) < 0 {
 		total = types.NewCurrency64(0)
 	}
 
@@ -714,8 +715,7 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 	}
 	total = curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
 	log.Printf("Got wallet balance of %s for %s\n", total.String(), siaNode.Shortcode)
-	total = total.Sub(types.SiacoinPrecision.Mul64(10))
-	if total.Cmp64(0) < 0 {
+	if total.Cmp(types.SiacoinPrecision.Mul64(siaMinerFees)) < 0 {
 		total = types.NewCurrency64(0)
 	}
 	if !total.IsZero() {
