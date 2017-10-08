@@ -22,7 +22,7 @@ const Footer = ({ activeItem, authAccount }) => (
         </a>
         <Link href="/tos">
           <a className="item" href="/tos">
-            Terms and Conditions
+            Terms
           </a>
         </Link>
         <Link href="/copyright">
@@ -35,6 +35,10 @@ const Footer = ({ activeItem, authAccount }) => (
             Privacy Policy
           </a>
         </Link>
+        <a className="item" href="https://github.com/thegreatdb/siacdn" target="_blank">
+          <Icon name="github" />
+          Open Source
+        </a>
       </div>
     </div>
   </div>
