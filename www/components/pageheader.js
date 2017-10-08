@@ -1,7 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 
-const PageHeader = ({children}) => (
+const PageHeader = ({ children }) => (
   <Head>
     <link
       rel="stylesheet"

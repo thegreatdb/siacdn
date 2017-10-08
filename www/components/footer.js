@@ -35,7 +35,11 @@ const Footer = ({ activeItem, authAccount }) => (
             Privacy Policy
           </a>
         </Link>
-        <a className="item" href="https://github.com/thegreatdb/siacdn" target="_blank">
+        <a
+          className="item"
+          href="https://github.com/thegreatdb/siacdn"
+          target="_blank"
+        >
           <Icon name="github" />
           Open Source
         </a>
