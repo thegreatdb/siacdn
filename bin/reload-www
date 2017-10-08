@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/base
+
+kube delete pod -l app=siacdn-www

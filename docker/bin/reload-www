@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-kubectl --namespace=sia delete pod -l app=siacdn-www

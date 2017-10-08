@@ -2,10 +2,12 @@
 
 set -e
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/base
 cd /tmp
+
 git clone https://github.com/coreos/prometheus-operator.git
 cd prometheus-operator/contrib/kube-prometheus
-
 hack/cluster-monitoring/deploy
 
 rm -Rf /tmp/prometheus-operator

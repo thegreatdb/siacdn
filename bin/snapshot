@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/base
+cd "$DIR/../backend"
+
+PODNAME=$(kube get pods -l app=siacdn-backend -o jsonpath="{.items[0].metadata.name}")
+
+kube exec -it $PODNAME -- sh -c 'cat /siacdn/data/database.json' > database.json

@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-kubectl --namespace=sia exec -it $(kubectl --namespace=sia get pods -l app=sia-prime -o jsonpath="{.items[0].metadata.name}") sh

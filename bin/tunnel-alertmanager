@@ -2,4 +2,7 @@
 
 set -e
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/base
+
 kubectl --namespace=monitoring port-forward alertmanager-main-0 9093

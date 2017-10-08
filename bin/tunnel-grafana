@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/base
+
+PODNAME=$(kubectl --namespace=monitoring get pods -l app=grafana -o jsonpath="{.items[0].metadata.name}")
+
+kubectl --namespace=monitoring port-forward $PODNAME 3000
