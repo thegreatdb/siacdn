@@ -1,7 +1,6 @@
 import React from 'react';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import HttpsRedirect from 'react-https-redirect';
 import { Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 
@@ -20,9 +19,9 @@ export default class Logout extends React.Component {
 
   render() {
     return (
-      <HttpsRedirect>
+      <div>
         <Message header="Please wait..." content="Logging you out now." />
-      </HttpsRedirect>
+      </div>
     );
   }
 }

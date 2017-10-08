@@ -1,8 +1,6 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import HttpsRedirect from 'react-https-redirect';
 import { Segment, Header, Button, List, Card, Icon } from 'semantic-ui-react';
 import TimeAgo from 'timeago-react';
 import Client from '../lib/client';
@@ -10,6 +8,7 @@ import redirect from '../lib/redirect';
 import Nav from '../components/nav';
 import Footer from '../components/footer';
 import { displayStatus } from '../lib/fmt';
+import PageHeader from '../components/pageheader';
 
 const instanceArray = siaNode => {
   var resp = [];
@@ -20,16 +19,8 @@ const instanceArray = siaNode => {
 };
 
 const SiaNode = ({ authTokenID, authAccount, siaNode }) => (
-  <HttpsRedirect>
-    <Head>
-      <link
-        rel="stylesheet"
-        href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
-      />
-      <link rel="stylesheet" href="/static/css/global.css" />
-      <script src="https://js.stripe.com/v3/" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-    </Head>
+  <div>
+    <PageHeader />
     <div className="holder">
       <Nav activeItem="sianode" authAccount={authAccount} />
 
@@ -120,7 +111,7 @@ const SiaNode = ({ authTokenID, authAccount, siaNode }) => (
 
       <Footer activeItem="dashboard" authAccount={authAccount} />
     </div>
-  </HttpsRedirect>
+  </div>
 );
 
 SiaNode.getInitialProps = async ctx => {

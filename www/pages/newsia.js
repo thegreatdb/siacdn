@@ -1,9 +1,7 @@
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import HttpsRedirect from 'react-https-redirect';
 import {
   Segment,
   Grid,
@@ -22,6 +20,7 @@ import Footer from '../components/footer';
 import redirect from '../lib/redirect';
 import Client from '../lib/client';
 import { displayStatus } from '../lib/fmt';
+import PageHeader from '../components/pageheader';
 
 const siaCostOptions = [
   //  { key: 0.02, text: ' 50GB - $0.024/mo', value: '0.02' },
@@ -189,16 +188,8 @@ export default class NewSia extends React.Component {
     const hasMinioError = Boolean(minioError);
     const siaNode = this.state.siaNode || this.props.orphanedSiaNode;
     return (
-      <HttpsRedirect>
-        <Head>
-          <link
-            rel="stylesheet"
-            href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
-          />
-          <link rel="stylesheet" href="/static/css/global.css" />
-          <script src="https://js.stripe.com/v3/" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
+      <div>
+        <PageHeader />
         <div className="holder">
           <Nav activeItem="newsia" authAccount={authAccount} />
 
@@ -322,7 +313,7 @@ export default class NewSia extends React.Component {
 
           <Footer activeItem="newsia" authAccount={authAccount} />
         </div>
-      </HttpsRedirect>
+      </div>
     );
   }
 }

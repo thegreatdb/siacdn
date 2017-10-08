@@ -1,12 +1,11 @@
 import React from 'react';
-import Head from 'next/head';
 import Router from 'next/router';
 import cookies from 'next-cookies';
-import HttpsRedirect from 'react-https-redirect';
 import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import Nav from '../components/nav';
 import Footer from '../components/footer';
+import PageHeader from '../components/pageheader';
 
 export default class LoginForm extends React.Component {
   state = { error: null, submitting: false, authAccount: null };
@@ -38,16 +37,8 @@ export default class LoginForm extends React.Component {
     const { submitting, error } = this.state;
     const hasError = Boolean(error);
     return (
-      <HttpsRedirect>
-        <Head>
-          <link
-            rel="stylesheet"
-            href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
-          />
-          <link rel="stylesheet" href="/static/css/global.css" />
-          <script src="https://js.stripe.com/v3/" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
+      <div>
+        <PageHeader />
         <div className="holder">
           <Nav activeItem="login" authAccount={null} />
           <Segment padded>
@@ -77,7 +68,7 @@ export default class LoginForm extends React.Component {
           </Segment>
           <Footer activeItem="login" authAccount={null} />
         </div>
-      </HttpsRedirect>
+      </div>
     );
   }
 }

@@ -1,11 +1,11 @@
 import React from 'react';
-import Head from 'next/head';
 import Router from 'next/router';
 import cookies from 'next-cookies';
 import { Segment, Header, Button, Form, Message } from 'semantic-ui-react';
 import Client from '../lib/client';
 import Nav from '../components/nav';
 import Footer from '../components/footer';
+import PageHeader from '../components/pageheader';
 
 export default class TermsOfService extends React.Component {
   async getInitialProps(ctx) {
@@ -16,15 +16,7 @@ export default class TermsOfService extends React.Component {
   render() {
     return (
       <div>
-        <Head>
-          <link
-            rel="stylesheet"
-            href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
-          />
-          <link rel="stylesheet" href="/static/css/global.css" />
-          <script src="https://js.stripe.com/v3/" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
+        <PageHeader />
         <div className="holder">
           <Nav activeItem="tos" authAccount={null} />
           <Segment padded>

@@ -1,7 +1,5 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import cookies from 'next-cookies';
-import HttpsRedirect from 'react-https-redirect';
 import {
   Segment,
   Step,
@@ -16,18 +14,11 @@ import {
 import Nav from '../components/nav';
 import Footer from '../components/footer';
 import Client from '../lib/client';
+import PageHeader from '../components/pageheader';
 
 const Index = ({ authAccount }) => (
-  <HttpsRedirect>
-    <Head>
-      <link
-        rel="stylesheet"
-        href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.2/semantic.min.css"
-      />
-      <link rel="stylesheet" href="/static/css/global.css" />
-      <script src="https://js.stripe.com/v3/" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-    </Head>
+  <div>
+    <PageHeader />
     <div className="holder">
       <Nav activeItem="index" authAccount={authAccount} />
       <Segment padded>
@@ -151,7 +142,7 @@ const Index = ({ authAccount }) => (
         min-height: 304px;
       }
     `}</style>
-  </HttpsRedirect>
+  </div>
 );
 
 Index.getInitialProps = async ctx => {
