@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+TMPDIR=/sia/tmp-`uuidgen`
+mkdir $TMPDIR
+
 if ! type "mc" > /dev/null; then
   echo "Installing and configuring the minio client..."
   curl -O https://dl.minio.io/client/mc/release/linux-amd64/mc
@@ -9,15 +12,15 @@ if ! type "mc" > /dev/null; then
 fi
 
 echo "1/4) Deleting any leftover tempfiles from a previous run..."
-rm -f /tmp/consensus.db \
-  /tmp/transactionpool.db \
-  /tmp/nodes.json \
-  /tmp/host.db \
-  /tmp/host.json \
-  /tmp/contractmanager.json \
-  /tmp/contractmanager.wal \
-  /tmp/hostdb.json \
-  /tmp/contractor.journal
+rm -f $TMPDIR/consensus.db \
+  $TMPDIR/transactionpool.db \
+  $TMPDIR/nodes.json \
+  $TMPDIR/host.db \
+  $TMPDIR/host.json \
+  $TMPDIR/contractmanager.json \
+  $TMPDIR/contractmanager.wal \
+  $TMPDIR/hostdb.json \
+  $TMPDIR/contractor.journal
 
 echo "2/4) Making copies of the data files..."
 cp /sia/consensus/consensus.db \
@@ -28,28 +31,30 @@ cp /sia/consensus/consensus.db \
   /sia/host/contractmanager/contractmanager.json \
   /sia/host/contractmanager/contractmanager.wal \
   /sia/renter/hostdb.json \
-  /sia/renter/contractor.journal /tmp/
+  /sia/renter/contractor.journal $TMPDIR/
 
 echo "3/4) Uploading data file copies..."
-mc cp /tmp/consensus.db \
-  /tmp/transactionpool.db \
-  /tmp/nodes.json \
-  /tmp/host.db \
-  /tmp/host.json \
-  /tmp/contractmanager.json \
-  /tmp/contractmanager.wal \
-  /tmp/hostdb.json \
-  /tmp/contractor.journal minio/sia/
+mc cp $TMPDIR/consensus.db \
+  $TMPDIR/transactionpool.db \
+  $TMPDIR/nodes.json \
+  $TMPDIR/host.db \
+  $TMPDIR/host.json \
+  $TMPDIR/contractmanager.json \
+  $TMPDIR/contractmanager.wal \
+  $TMPDIR/hostdb.json \
+  $TMPDIR/contractor.journal minio/sia/
 
 echo "4/4) Cleaning up..."
-rm -f /tmp/consensus.db \
-  /tmp/transactionpool.db \
-  /tmp/nodes.json \
-  /tmp/host.db \
-  /tmp/host.json \
-  /tmp/contractmanager.json \
-  /tmp/contractmanager.wal \
-  /tmp/hostdb.json \
-  /tmp/contractor.journal
+rm -f $TMPDIR/consensus.db \
+  $TMPDIR/transactionpool.db \
+  $TMPDIR/nodes.json \
+  $TMPDIR/host.db \
+  $TMPDIR/host.json \
+  $TMPDIR/contractmanager.json \
+  $TMPDIR/contractmanager.wal \
+  $TMPDIR/hostdb.json \
+  $TMPDIR/contractor.journal
+
+rm -Rf $TMPDIR
 
 echo "Backup complete."

@@ -8,7 +8,7 @@ echo "Booting up Sia!"
 echo "Printing sia directory tree:"
 ls -lhtra /sia
 
-TMPDIR=/tmp/`uuidgen`
+TMPDIR=/sia/tmp-`uuidgen`
 
 if [ ! -d consensus ]; then
   echo "No consensus file found, downloading latest snapshot..."
@@ -45,6 +45,7 @@ if [ ! -d consensus ]; then
 
   cd /sia/
   mv $TMPDIR/* /sia/
+  rm -Rf $TMPDIR
 
   echo "Done!"
 else
