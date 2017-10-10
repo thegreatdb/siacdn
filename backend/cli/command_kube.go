@@ -678,7 +678,7 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		return err
 	}
 
-	total := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
+	total := curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins).Sub(curResp.UnconfirmedOutgoingSiacoins)
 	if total.Cmp(types.SiacoinPrecision.Mul64(siaMinerFees)) < 0 {
 		total = types.NewCurrency64(0)
 	}
@@ -713,7 +713,7 @@ func pollKubeStopping(clientset *kubernetes.Clientset, siaNode *models.SiaNode) 
 		log.Println("Could not get balance for " + siaNode.Shortcode + ": " + err.Error())
 		return err
 	}
-	total = curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins)
+	total = curResp.ConfirmedSiacoinBalance.Add(curResp.UnconfirmedIncomingSiacoins).Sub(curResp.UnconfirmedOutgoingSiacoins)
 	log.Printf("Got wallet balance of %s for %s\n", total.String(), siaNode.Shortcode)
 	if total.Cmp(types.SiacoinPrecision.Mul64(siaMinerFees)) < 0 {
 		total = types.NewCurrency64(0)
