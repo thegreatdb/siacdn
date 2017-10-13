@@ -1423,7 +1423,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 						},
 						v1.EnvVar{
 							Name:  "SIA_BACKGROUND_UPLOAD",
-							Value: "1",
+							Value: "0",
 						},
 					},
 				},
