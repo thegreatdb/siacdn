@@ -1406,24 +1406,8 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 							Value: siaNode.KubeNameSer() + ".sia.svc.cluster.local:9980",
 						},
 						v1.EnvVar{
-							Name:  "SIA_CACHE_DIR",
+							Name:  "SIA_TEMP_DIR",
 							Value: filepath.Join(mountPath, "siacache"),
-						},
-						v1.EnvVar{
-							Name:  "SIA_DB_FILE",
-							Value: filepath.Join(mountPath, "sia.db"),
-						},
-						v1.EnvVar{
-							Name:  "SIA_CACHE_MAX_SIZE_BYTES",
-							Value: "90000000000",
-						},
-						v1.EnvVar{
-							Name:  "SIA_CACHE_PURGE_AFTER_SEC",
-							Value: "345600",
-						},
-						v1.EnvVar{
-							Name:  "SIA_BACKGROUND_UPLOAD",
-							Value: "0",
 						},
 					},
 				},

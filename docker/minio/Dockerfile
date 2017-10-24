@@ -1,6 +1,6 @@
-FROM golang:1.9-alpine
+FROM golang:1.9.1-alpine
 
-ENV BUILD_VERSION a3bc9432c2d33245e7ab680aee73737172135997
+ENV BUILD_VERSION f4c3078d9c63d3500796f6d3acc2b557b01297d4
 
 RUN \
   apk update && \
@@ -25,7 +25,7 @@ RUN \
   go get -u github.com/inconshreveable/go-update && \
   go get -u github.com/kardianos/osext && \
   go get -u github.com/inconshreveable/mousetrap && \
-  go get -u github.com/bgentry/speakeasy && \
+  go get -u golang.org/x/crypto/ssh/terminal && \
   go get -u github.com/spf13/cobra/... && \
   go get -u github.com/boltdb/bolt && \
   mkdir -p /go/src/github.com/minio && \
