@@ -107,7 +107,13 @@ Dashboard.getInitialProps = async ctx => {
     redirect(ctx, '/signup');
     return { authAccount };
   }
-  const siaNodes = await client.getSiaNodes();
+  let siaNodes = await client.getSiaNodes();
+  siaNodes = siaNodes.filter(siaNode => {
+    if (siaNode.status === 'stopped') {
+      return false;
+    }
+    return true;
+  });
   return { authAccount, siaNodes };
 };
 
