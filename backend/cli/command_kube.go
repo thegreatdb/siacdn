@@ -1339,6 +1339,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 	}
 	// If deployment doesn't exist, create it
 	if deployment == nil || errors.IsNotFound(err) {
+		siaDaemonAddr := siaNode.KubeNameSer() + ".sia.svc.cluster.local:9980"
 		deployment := &v1beta1.Deployment{}
 		deployment.Name = name
 		deployment.Namespace = kubeNamespace
@@ -1359,8 +1360,9 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 			Containers: []v1.Container{
 				v1.Container{
 					Name:            name,
-					Image:           "gcr.io/gradientzoo-1233/siacdn-minio:latest",
+					Image:           "minio/minio:edge",
 					ImagePullPolicy: v1.PullAlways,
+					Command:         []string{"minio", "gateway", "sia", siaDaemonAddr},
 					Ports: []v1.ContainerPort{
 						v1.ContainerPort{ContainerPort: 9000},
 					},
@@ -1403,7 +1405,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 						},
 						v1.EnvVar{
 							Name:  "SIA_DAEMON_ADDR",
-							Value: siaNode.KubeNameSer() + ".sia.svc.cluster.local:9980",
+							Value: siaDaemonAddr,
 						},
 						v1.EnvVar{
 							Name:  "SIA_TEMP_DIR",

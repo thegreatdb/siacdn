@@ -52,6 +52,4 @@ else
   echo "Found consensus file!"
 fi
 
-#/root/unlock.sh &
-
 siad -d /sia --authenticate-api --disable-api-security --api-addr :9980
