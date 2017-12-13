@@ -20,7 +20,7 @@ rm -f $TMPDIR/consensus.db \
   $TMPDIR/contractmanager.json \
   $TMPDIR/contractmanager.wal \
   $TMPDIR/hostdb.json \
-  $TMPDIR/contractor.journal
+  $TMPDIR/contractor.json
 
 echo "2/4) Making copies of the data files..."
 cp /sia/consensus/consensus.db \
@@ -31,7 +31,7 @@ cp /sia/consensus/consensus.db \
   /sia/host/contractmanager/contractmanager.json \
   /sia/host/contractmanager/contractmanager.wal \
   /sia/renter/hostdb.json \
-  /sia/renter/contractor.journal $TMPDIR/
+  /sia/renter/contractor.json $TMPDIR/
 
 echo "3/4) Uploading data file copies..."
 mc cp $TMPDIR/consensus.db \
@@ -42,7 +42,7 @@ mc cp $TMPDIR/consensus.db \
   $TMPDIR/contractmanager.json \
   $TMPDIR/contractmanager.wal \
   $TMPDIR/hostdb.json \
-  $TMPDIR/contractor.journal minio/sia/
+  $TMPDIR/contractor.json minio/sia/
 
 echo "4/4) Cleaning up..."
 rm -f $TMPDIR/consensus.db \
@@ -53,7 +53,7 @@ rm -f $TMPDIR/consensus.db \
   $TMPDIR/contractmanager.json \
   $TMPDIR/contractmanager.wal \
   $TMPDIR/hostdb.json \
-  $TMPDIR/contractor.journal
+  $TMPDIR/contractor.json
 
 rm -Rf $TMPDIR
 

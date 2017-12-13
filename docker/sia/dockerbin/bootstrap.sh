@@ -38,7 +38,7 @@ if [ ! -d consensus ]; then
 
   mkdir renter && cd renter
   curl -O https://minio.maxint.co/sia/hostdb.json -H "Accept-Encoding: gzip, deflate, sdch" --compressed
-  curl -O https://minio.maxint.co/sia/contractor.journal -H "Accept-Encoding: gzip, deflate, sdch" --compressed
+  curl -O https://minio.maxint.co/sia/contractor.json -H "Accept-Encoding: gzip, deflate, sdch" --compressed
   cd ..
 
   echo "Finished downloading, now moving to /sia directory idempotently..."
