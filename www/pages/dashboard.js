@@ -108,12 +108,7 @@ Dashboard.getInitialProps = async ctx => {
     return { authAccount };
   }
   let siaNodes = await client.getSiaNodes();
-  siaNodes = siaNodes.filter(siaNode => {
-    if (siaNode.status === 'stopped') {
-      return false;
-    }
-    return true;
-  });
+  siaNodes = siaNodes.filter(siaNode => siaNode.status !== 'stopped');
   return { authAccount, siaNodes };
 };
 
