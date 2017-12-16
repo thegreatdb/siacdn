@@ -9,6 +9,7 @@ spec:
     metadata:
       labels:
         app: sia
+        siakind: daemon
     spec:
       volumes:
         - name: sia-volume

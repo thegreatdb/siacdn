@@ -265,7 +265,7 @@ func pollKubeCreated(clientset *kubernetes.Clientset, siaNode *models.SiaNode) e
 		deployment.Namespace = kubeNamespace
 		deployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
 		deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
-		deployment.Spec.Template.Labels = map[string]string{"app": siaNode.KubeNameApp()}
+		deployment.Spec.Template.Labels = map[string]string{"app": siaNode.KubeNameApp(), "siakind": "daemon"}
 		deployment.Spec.Template.Spec = v1.PodSpec{
 			Volumes: []v1.Volume{
 				v1.Volume{
@@ -1098,7 +1098,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		nfsDeployment.Namespace = kubeNamespace
 		nfsDeployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
 		nfsDeployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
-		nfsDeployment.Spec.Template.Labels = map[string]string{"app": nfsName}
+		nfsDeployment.Spec.Template.Labels = map[string]string{"app": nfsName, "siakind": "nfs"}
 		nfsDeployment.Spec.Template.Spec = v1.PodSpec{
 			Volumes: []v1.Volume{
 				v1.Volume{
@@ -1345,7 +1345,7 @@ func deployMinio(clientset *kubernetes.Clientset, siaNode *models.SiaNode, insta
 		deployment.Namespace = kubeNamespace
 		deployment.Spec = v1beta1.DeploymentSpec{Template: v1.PodTemplateSpec{}}
 		deployment.Spec.Strategy.Type = v1beta1.RecreateDeploymentStrategyType
-		deployment.Spec.Template.Labels = map[string]string{"app": name}
+		deployment.Spec.Template.Labels = map[string]string{"app": name, "siakind": "minio"}
 		deployment.Spec.Template.Spec = v1.PodSpec{
 			Volumes: []v1.Volume{
 				v1.Volume{

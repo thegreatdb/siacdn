@@ -7,7 +7,7 @@ RUN \
   apk add git ca-certificates curl openssl util-linux && \
   update-ca-certificates
 
-ENV SIA_COMMIT ef89f245eb80273d92dcd38b10af4b53bf80b52b
+ENV SIA_COMMIT e1b6cca25e783ec64ba9cf370b6119cc112842de
 
 RUN go get -u github.com/NebulousLabs/Sia/...
 

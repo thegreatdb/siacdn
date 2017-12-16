@@ -9,6 +9,7 @@ spec:
     metadata:
       labels:
         app: siacdn-www
+        siakind: www
     spec:
       containers:
         - name: maxint-www

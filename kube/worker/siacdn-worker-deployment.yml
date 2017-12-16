@@ -9,6 +9,7 @@ spec:
     metadata:
       labels:
         app: siacdn-worker
+        siakind: worker
     spec:
       containers:
         - name: siacdn-worker
