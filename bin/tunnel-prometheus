@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $DIR/base
-
-kubectl --namespace=monitoring port-forward prometheus-k8s-0 9090

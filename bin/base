@@ -1,3 +1,0 @@
-PROJECT_NAME="gradientzoo-1233"
-
-KUBE='kubectl --namespace=sia'

@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $DIR/base
-
-$KUBE delete pod -l app=siacdn-backend
-$KUBE delete pod -l app=siacdn-worker
