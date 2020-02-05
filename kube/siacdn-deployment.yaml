@@ -38,6 +38,9 @@ spec:
         command: ["yarn", "server-prod"]
         ports:
         - containerPort: 4000
+        volumeMounts:
+          - name: sia
+            mountPath: /root/.sia
       - name: nginx
         image: ericflo/siacdn-nginx:latest
         imagePullPolicy: Always
