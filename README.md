@@ -1,3 +1,3 @@
 # SiaCDN
 
-SiaCDN is in the process of being rebuilt. It's now a hosted Skynet node.
+SiaCDN is in the process of being rebuilt. It's now a high-quality hosted Skynet node.
