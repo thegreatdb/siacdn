@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siacdn-deployment
+spec:
+  selector:
+    matchLabels:
+      app: siacdn
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: siacdn
+    spec:
+      volumes:
+      - name: sia
+        persistentVolumeClaim:
+          claimName: siacdn-persistent-volume-claim
+      containers:
+      - name: viewnode
+        image: ericflo/siacdn-viewnode:latest
+        imagePullPolicy: Always
+        command: ["siad"]
+        ports:
+        - containerPort: 9980
+        volumeMounts:
+          - name: sia
+            mountPath: /root/.sia
+      - name: portal-client
+        image: ericflo/siacdn-portal:latest
+        imagePullPolicy: Always
+        command: ["yarn", "client-prod"]
+        ports:
+        - containerPort: 3000
+      - name: portal-server
+        image: ericflo/siacdn-portal:latest
+        imagePullPolicy: Always
+        command: ["yarn", "server-prod"]
+        ports:
+        - containerPort: 4000
+      - name: nginx
+        image: ericflo/siacdn-nginx:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
