@@ -46,7 +46,7 @@ This repository can be used to easily deploy a Skynet node of your own on Google
 
 2. Use the output of that to run siac commands on the running sia node:
 
-> # In the following, siacdn-deployment-567cda4ea9-wx2sr is the output of #1, without pod/
+> NOTE: In the following, siacdn-deployment-567cda4ea9-wx2sr is the output of #1, without pod/
 
 > kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac
 
