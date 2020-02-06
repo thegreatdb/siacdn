@@ -34,4 +34,5 @@ This repository can be used to easily deploy a Skynet node of your own on Google
 2. Create the kubernetes resources from the local kube dir.
 
 > cd siacdn
+
 > kubectl create -f kube/
