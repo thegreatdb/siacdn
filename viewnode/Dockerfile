@@ -17,4 +17,4 @@ RUN apt-get install -y git build-essential && \
     apt-get remove --purge -y git build-essential && \
     apt autoremove -y
 
-WORKDIR /Sia
+WORKDIR /root/.sia

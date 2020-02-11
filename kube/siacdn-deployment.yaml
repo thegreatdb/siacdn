@@ -20,7 +20,7 @@ spec:
       - name: viewnode
         image: ericflo/siacdn-viewnode:latest
         imagePullPolicy: Always
-        command: ["siad"]
+        command: ["siad", "-d", "/root/.sia"]
         ports:
         - containerPort: 9980
         volumeMounts:
