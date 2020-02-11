@@ -70,9 +70,9 @@ kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac wallet a
 
 5. Run siac renter setallowance twice, with parameters detailed by Nebulous at the following link, but use your judgement and adjust limits to your setup:
 
-[https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#viewnode-setup](https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#viewnode-setup)
+[https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#portal-setup](https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#portal-setup)
 
 ```
 kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac renter setallowance
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac renter setallowance --payment-contract-initial-price 10SC
+kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac renter setallowance --payment-contract-initial-funding 10SC
 ```
