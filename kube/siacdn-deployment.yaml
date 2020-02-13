@@ -7,6 +7,8 @@ spec:
     matchLabels:
       app: siacdn
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -29,13 +31,13 @@ spec:
       - name: portal-client
         image: ericflo/siacdn-portal:latest
         imagePullPolicy: Always
-        command: ["yarn", "client-prod"]
+        command: ["http-server", "-p", "3000", "packages/sia-skynet/build"]
         ports:
         - containerPort: 3000
       - name: portal-server
         image: ericflo/siacdn-portal:latest
         imagePullPolicy: Always
-        command: ["yarn", "server-prod"]
+        command: ["yarn", "workspace", "siaviewnode-server", "start"]
         ports:
         - containerPort: 4000
         volumeMounts:
