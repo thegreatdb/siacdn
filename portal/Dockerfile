@@ -17,6 +17,8 @@ RUN apt-get install -y git && \
     git clone https://github.com/NebulousLabs/skynet-webportal.git && \
     cd skynet-webportal && \
     sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "packages/sia-skynet/package.json" && \
+    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "packages/sia-skynet/src/components/HomeUpload/HomeUpload.js" && \
+    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "packages/sia-skynet/src/components/CodeExamples/Code.js" && \
     yarn global add http-server && \
     yarn && \
     yarn workspace sia-skynet build && \
