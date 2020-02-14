@@ -13,19 +13,27 @@ This repository can be used to easily deploy a Skynet node of your own on Google
 3. Clone your fork of the repo and make the following configuration changes, or do it using GitHub's built-in editor.
 
 
-## Configuration changes before we can begin
-
-1. Change the value in `kube/siacdn-certificate-toplevel.yaml` to match your domain name (line 7)
-2. Change the value in `kube/siacdn-certificate-www.yaml` to match your domain name, keeping the www (line 7)
-3. Ensure that these changes are pushed to your clone of this repo.
-
-
 ## Prerequisites
 
 1. You should have Docker installed on your local machine.
 2. You should have a Google Kubernetes Engine cluster, running, and have kubectl authenticated to connect to it. (`gcloud container clusters create siacdn` && `gcloud container clusters get-credentials siacdn`)
-3. You should have a reserved external IP address named siacdn-ip-address (`gcloud compute addresses create siacdn-ip-address --global`)
+3. You should have a reserved external IP address named YOURDOMAIN-ip-address (`gcloud compute addresses create YOURDOMAIN-ip-address --global`)
 4. Create two A records in your DNS that point to this reserved external IP address - one with a www prefix and another without.
+
+
+## Customization and configuration changes before we can begin
+
+1. Change the value in `kube/siacdn-certificate-toplevel.yaml` to match your domain name (line 7)
+2. Change the value in `kube/siacdn-certificate-www.yaml` to match your domain name, keeping the www (line 7)
+3. Ensure that these changes are pushed to your clone of this repo.
+4. Change "siacdn-ip-address" to what you named `YOURDOMAIN-ip-address`, in `kube/siacdn-ingress.yaml`.
+5. Change `ericflo/siacdn-nginx:latest` to `YOUR_DOCKERHUB_NAME/siacdn-nginx:latest` in bin/*, repeat for `siacdn-portal` and `siacdn-viewnode`.
+6. Do the same change for the Docker image name values in `kube/siacdn-deployment.yaml`.
+7. Create `siacdn-nginx`, `siacdn-portal`, and `siacdn-viewnode` projects on your Docker Hub account.
+8. Edit the `server_name` field in `nginx/nginx.conf` to match your domain name.
+9. Change `SIACDN_DOMAIN` in `portal/Dockerfile` to match your domain.
+10. Run `bin/docker-build-nginx`, `bin/docker-build-portal`, and `bin/docker-build-viewnode`, which will build and upload the docker images to your account.
+11. Commit and push all these changes to your fork of this repo.
 
 
 ## Installing SiaCDN
