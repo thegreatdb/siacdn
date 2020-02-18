@@ -4,7 +4,7 @@ FROM ubuntu:20.04
 ENV SIACDN_DOMAIN siacdn.com
 
 # For cache invalidation
-ENV SIACDN_BUILD_VERSION 1
+ENV SIACDN_BUILD_VERSION 2
 
 # Install base system
 RUN apt-get update && apt-get upgrade -y && apt-get -y install gnupg2 ca-certificates curl && \
@@ -12,20 +12,16 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install gnupg2 ca-certifi
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     apt-get update && apt-get install -y yarn
 
-# For cache invalidation
-ENV SIACDN_BUILD_VERSION 2
-
 # Install and build portal and server
 RUN apt-get install -y git && \
     git clone https://github.com/NebulousLabs/skynet-webportal.git && \
     cd skynet-webportal && \
-    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "packages/sia-skynet/package.json" && \
-    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "packages/sia-skynet/src/components/HomeUpload/HomeUpload.js" && \
-    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "packages/sia-skynet/src/components/CodeExamples/Code.js" && \
+    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "package.json" && \
+    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "src/components/HomeUpload/HomeUpload.js" && \
+    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "src/components/CodeExamples/Code.js" && \
     yarn global add http-server && \
     yarn && \
-    yarn workspace sia-skynet build && \
-    yarn workspace siaviewnode-server build && \
+    yarn run build && \
     apt-get remove --purge -y git && \
     apt autoremove -y
 

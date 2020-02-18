@@ -28,23 +28,18 @@ spec:
         volumeMounts:
           - name: sia
             mountPath: /root/.sia
-      - name: portal-client
+      - name: portal
         image: ericflo/siacdn-portal:latest
         imagePullPolicy: Always
-        command: ["http-server", "-p", "3000", "packages/sia-skynet/build"]
+        command: ["http-server", "-p", "3000", "build"]
         ports:
         - containerPort: 3000
-      - name: portal-server
-        image: ericflo/siacdn-portal:latest
-        imagePullPolicy: Always
-        command: ["yarn", "workspace", "siaviewnode-server", "start"]
-        ports:
-        - containerPort: 4000
-        volumeMounts:
-          - name: sia
-            mountPath: /root/.sia
       - name: nginx
         image: ericflo/siacdn-nginx:latest
         imagePullPolicy: Always
+        command: ["/etc/skynet/start-nginx.sh"]
         ports:
         - containerPort: 8080
+        volumeMounts:
+          - name: sia
+            mountPath: /root/.sia

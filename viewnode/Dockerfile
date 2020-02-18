@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+# For cache invalidation
+ENV SIACDN_BUILD_VERSION 2
+
 RUN apt-get update && apt-get upgrade -y && apt-get -y install ca-certificates curl
 
 ENV GOLANG_GOOS linux
