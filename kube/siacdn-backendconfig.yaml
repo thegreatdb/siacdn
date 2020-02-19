@@ -3,6 +3,9 @@ kind: BackendConfig
 metadata:
   name: siacdn-backend-config
 spec:
+  timeoutSec: 14400
+  connectionDraining:
+    drainingTimeoutSec: 60
   cdn:
     enabled: true
     cachePolicy:
