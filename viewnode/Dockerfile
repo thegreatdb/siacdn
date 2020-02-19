@@ -1,13 +1,13 @@
 FROM ubuntu:20.04
 
 # For cache invalidation
-ENV SIACDN_BUILD_VERSION 2
+ENV SIACDN_BUILD_VERSION 3
 
 RUN apt-get update && apt-get upgrade -y && apt-get -y install ca-certificates curl
 
 ENV GOLANG_GOOS linux
 ENV GOLANG_GOARCH amd64
-ENV GOLANG_VERSION 1.13.7
+ENV GOLANG_VERSION 1.13.8
 RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.$GOLANG_GOOS-$GOLANG_GOARCH.tar.gz \
   | tar -v -C /usr/local -xz
 ENV GOPATH $HOME/go

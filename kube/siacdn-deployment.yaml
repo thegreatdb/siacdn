@@ -22,12 +22,15 @@ spec:
       - name: viewnode
         image: ericflo/siacdn-viewnode:latest
         imagePullPolicy: Always
-        command: ["siad", "-d", "/root/.sia"]
+        command: []
         ports:
         - containerPort: 9980
         volumeMounts:
           - name: sia
             mountPath: /root/.sia
+        envFrom:
+          - secretRef:
+              name: siacdn-secret
       - name: portal
         image: ericflo/siacdn-portal:latest
         imagePullPolicy: Always
