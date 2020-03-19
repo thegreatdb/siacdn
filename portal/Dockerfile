@@ -1,10 +1,11 @@
 FROM ubuntu:20.04
 
+# For cache invalidation
+ENV SIACDN_BUILD_VERSION 3
+
 # The domain we're hosting on
 ENV SIACDN_DOMAIN siacdn.com
-
-# For cache invalidation
-ENV SIACDN_BUILD_VERSION 2
+ENV GATSBY_API_URL="https://${SIACDN_DOMAIN}"
 
 # Install base system
 RUN apt-get update && apt-get upgrade -y && apt-get -y install gnupg2 ca-certificates curl && \
@@ -16,12 +17,11 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install gnupg2 ca-certifi
 RUN apt-get install -y git && \
     git clone https://github.com/NebulousLabs/skynet-webportal.git && \
     cd skynet-webportal && \
-    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "package.json" && \
-    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "src/components/HomeUpload/HomeUpload.js" && \
-    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "src/components/CodeExamples/Code.js" && \
-    yarn global add http-server && \
+    sed -i -- 's#'"siasky.net"'#'"$SIACDN_DOMAIN"'#g' "gatsby-config.js" && \
     yarn && \
     yarn run build && \
+    rm -Rf node_modules && \
+    yarn global add http-server && \
     apt-get remove --purge -y git && \
     apt autoremove -y
 

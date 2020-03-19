@@ -17,9 +17,12 @@ spec:
       volumes:
       - name: sia
         persistentVolumeClaim:
-          claimName: siacdn-persistent-volume-claim
+          claimName: siacdn-persistent-volume-claim-read
+      - name: sia-upload
+        persistentVolumeClaim:
+          claimName: siacdn-persistent-volume-claim-write
       containers:
-      - name: viewnode
+      - name: sia
         image: ericflo/siacdn-viewnode:latest
         imagePullPolicy: Always
         command: ["siad", "-d", "/root/.sia"]
@@ -30,11 +33,23 @@ spec:
             mountPath: /root/.sia
         envFrom:
           - secretRef:
-              name: siacdn-secret
+              name: siacdn-sia-secret
+      - name: sia-upload
+        image: ericflo/siacdn-viewnode:latest
+        imagePullPolicy: Always
+        command: ["siad", "-d", "/root/.sia", "--api-addr", "localhost:9970", "--rpc-addr", ":9971", "--host-addr", ":9972", "--siamux-addr", ":9973"]
+        ports:
+        - containerPort: 9970
+        volumeMounts:
+          - name: sia-upload
+            mountPath: /root/.sia
+        envFrom:
+          - secretRef:
+              name: siacdn-sia-upload-secret
       - name: portal
         image: ericflo/siacdn-portal:latest
         imagePullPolicy: Always
-        command: ["http-server", "-p", "3000", "build"]
+        command: ["http-server", "-p", "3000", "public"]
         ports:
         - containerPort: 3000
       - name: nginx
@@ -46,3 +61,15 @@ spec:
         volumeMounts:
           - name: sia
             mountPath: /root/.sia
+          - name: sia-upload
+            mountPath: /root/.sia-upload
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: storage
+                    operator: In
+                    values:
+                      - siacdn

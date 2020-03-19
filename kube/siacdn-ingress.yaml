@@ -1,11 +1,25 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: siacdn-ingress
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: siacdn-ip-address
-    networking.gke.io/managed-certificates: "siacdn-certificate-www,siacdn-certificate-toplevel"
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "false"
 spec:
+  tls:
+    - secretName: siacdn-ingress-cert
+      hosts:
+        - new.siacdn.com
   backend:
-    serviceName: siacdn-nodeport-service
-    servicePort: 80
+    serviceName: siacdn-service
+    servicePort: 8080
+  rules:
+  - host: new.siacdn.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: siacdn-service
+          servicePort: 8080

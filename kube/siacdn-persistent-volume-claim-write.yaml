@@ -1,11 +1,10 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: siacdn-persistent-volume-claim
+  name: siacdn-persistent-volume-claim-write
 spec:
-  storageClassName: fast
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Gi
+      storage: 50Gi

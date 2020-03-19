@@ -1,3 +1,4 @@
 .DS_Store
 database.json
-kube/siacdn-secret.yaml
+kube/siacdn-sia-secret.yaml
+kube/siacdn-sia-upload-secret.yaml

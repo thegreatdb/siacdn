@@ -6,7 +6,7 @@ This repository is the complete set of scripts that is used to run this high-qua
 
 ## How can I use this repository?
 
-This repository can be used to easily deploy a Skynet node of your own on Google Kubernetes Engine. Here's how:
+This repository can be used to easily deploy a Skynet node of your own on Kubernetes. Here's how:
 
 1. Fork this repo on GitHub. It'll just take a second - I'll wait!
 2. Navigate to your fork and continue reading this README there.
@@ -16,25 +16,22 @@ This repository can be used to easily deploy a Skynet node of your own on Google
 ## Prerequisites
 
 1. You should have Docker installed on your local machine.
-2. You should have a Google Kubernetes Engine cluster, running, and have kubectl authenticated to connect to it. (`gcloud container clusters create siacdn` && `gcloud container clusters get-credentials siacdn`)
-3. You should have a reserved external IP address named YOURDOMAIN-ip-address (`gcloud compute addresses create YOURDOMAIN-ip-address --global`)
-4. Create two A records in your DNS that point to this reserved external IP address - one with a www prefix and another without.
+2. You should have access to a Kubernetes cluster, and have kubectl authenticated to connect to it.
+3. The Kubernetes cluster should use nginx ingress an installation of cert-manager with a cluster-issuer named `letsencrypt-prod`.
+4. You should have a domain configured to point to your Kubernetes cluster.
 
 
 ## Customization and configuration changes before we can begin
 
-1. Change the value in `kube/siacdn-certificate-toplevel.yaml` to match your domain name (line 7)
-2. Change the value in `kube/siacdn-certificate-www.yaml` to match your domain name, keeping the www (line 7)
-3. Copy `kube/siacdn-secret.yaml.template` to `kube/siacdn-secret.yaml` and fill in SIA_WALLET_PASSWORD with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0`
-4. Ensure that these changes are pushed to your clone of this repo.
-5. Change "siacdn-ip-address" to what you named `YOURDOMAIN-ip-address`, in `kube/siacdn-ingress.yaml`.
-6. Change `ericflo/siacdn-nginx:latest` to `YOUR_DOCKERHUB_NAME/siacdn-nginx:latest` in bin/*, repeat for `siacdn-portal` and `siacdn-viewnode`.
-7. Do the same change for the Docker image name values in `kube/siacdn-deployment.yaml`.
-8. Create `siacdn-nginx`, `siacdn-portal`, and `siacdn-viewnode` projects on your Docker Hub account.
-9. Edit the `server_name` field in `nginx/nginx.conf` to match your domain name.
-10. Change `SIACDN_DOMAIN` in `portal/Dockerfile` to match your domain.
-11. Run `bin/docker-build-nginx`, `bin/docker-build-portal`, and `bin/docker-build-viewnode`, which will build and upload the docker images to your account.
-12. Commit and push all these changes to your fork of this repo.
+1. Copy `kube/siacdn-sia-upload-secret.yaml.template` to `kube/siacdn-sia-upload-secret.yaml` and fill in SIA_WALLET_PASSWORD with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0`
+2. Copy `kube/siacdn-sia-secret.yaml.template` to `kube/siacdn-sia-secret.yaml` and fill in SIA_WALLET_PASSWORD with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0`
+3. Change `ericflo/siacdn-nginx:latest` to `YOUR_DOCKERHUB_NAME/siacdn-nginx:latest` in bin/*, repeat for `siacdn-portal` and `siacdn-viewnode`.
+4. Do the same change for the Docker image name values in `kube/siacdn-deployment.yaml`.
+5. Create `siacdn-nginx`, `siacdn-portal`, and `siacdn-viewnode` projects on your Docker Hub account.
+6. Edit the `server_name` field in `nginx/nginx.conf` to match your domain name.
+7. Change `SIACDN_DOMAIN` in `portal/Dockerfile` to match your domain.
+8. Run `bin/docker-build-nginx`, `bin/docker-build-portal`, and `bin/docker-build-viewnode`, which will build and upload the docker images to your account.
+9. Commit and push all these changes to your fork of this repo.
 
 
 ## Installing SiaCDN
@@ -50,38 +47,32 @@ kubectl create -f kube/
 
 ## Configuring your Sia node
 
-1. Use kubectl to determine the pod where Sia is running:
+1. Run siac wallet init and wait for consensus, checking using plain siac command.
 
 ```
-kubectl get pods -l app=siacdn -o name
+kubectl exec -it deployment/siacdn-deployment -c sia -- siac wallet init
+kubectl exec -it deployment/siacdn-deployment -c sia -- siac
 ```
 
-2. Use the output of that to run siac commands on the running sia node:
-
-__NOTE: In the following, siacdn-deployment-567cda4ea9-wx2sr is the output of #1, without pod/__
+2. Run siac wallet address to get an address, and send that address some siacoins, probably 25K or so.
 
 ```
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac
+kubectl exec -it deployment/siacdn-deployment -c sia -- siac wallet address
 ```
 
-3. Run siac wallet init and wait for consensus, checking using plain siac command.
-
-```
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac wallet init
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac
-```
-
-4. Run siac wallet address to get an address, and send that address some siacoins, probably 25K or so.
-
-```
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac wallet address
-```
-
-5. Run siac renter setallowance twice, with parameters detailed by Nebulous at the following link, but use your judgement and adjust limits to your setup:
+3. Run siac renter setallowance twice, with parameters detailed by Nebulous at the following link, but use your judgement and adjust limits to your setup:
 
 [https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#portal-setup](https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#portal-setup)
 
 ```
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac renter setallowance
-kubectl exec -it siacdn-deployment-567cda4ea9-wx2sr -c viewnode -- siac renter setallowance --payment-contract-initial-funding 10SC
+kubectl exec -it deployment/siacdn-deployment -c sia -- siac renter setallowance
+kubectl exec -it deployment/siacdn-deployment -c sia -- siac renter setallowance --payment-contract-initial-funding 10SC
+```
+
+4. Repeat steps 1 to 3, but instead of `-c sia`, use `-c sia-upload`, and instead of `siac` use `siac -addr localhost:9970`. Here's an example:
+
+```
+kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac -addr localhost:9970 wallet init
+kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac -addr localhost:9970 wallet address
+kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac -addr localhost:9970 renter setallowance --payment-contract-initial-funding 10SC
 ```
