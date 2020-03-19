@@ -6,17 +6,18 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/from-to-www-redirect: "false"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   tls:
     - secretName: siacdn-ingress-cert
       hosts:
-        - new.siacdn.com
+        - www.siacdn.com
+        - siacdn.com
   backend:
     serviceName: siacdn-service
     servicePort: 8080
   rules:
-  - host: new.siacdn.com
+  - host: www.siacdn.com
     http:
       paths:
       - path: /
