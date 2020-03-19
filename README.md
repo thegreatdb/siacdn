@@ -72,7 +72,7 @@ kubectl exec -it deployment/siacdn-deployment -c sia -- siac renter setallowance
 4. Repeat steps 1 to 3, but instead of `-c sia`, use `-c sia-upload`, and instead of `siac` use `siac -addr localhost:9970`. Here's an example:
 
 ```
-kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac -addr localhost:9970 wallet init
-kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac -addr localhost:9970 wallet address
-kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac -addr localhost:9970 renter setallowance --payment-contract-initial-funding 10SC
+kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac --addr localhost:9970 wallet init
+kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac --addr localhost:9970 wallet address
+kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac --addr localhost:9970 renter setallowance --payment-contract-initial-funding 10SC
 ```

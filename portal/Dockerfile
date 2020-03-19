@@ -4,7 +4,7 @@ FROM ubuntu:20.04
 ENV SIACDN_BUILD_VERSION 3
 
 # The domain we're hosting on
-ENV SIACDN_DOMAIN siacdn.com
+ENV SIACDN_DOMAIN www.siacdn.com
 ENV GATSBY_API_URL="https://${SIACDN_DOMAIN}"
 
 # Install base system
