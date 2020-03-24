@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 # For cache invalidation
-ENV SIACDN_BUILD_VERSION 3
+ENV SIACDN_BUILD_VERSION 5
 
 # The domain we're hosting on
 ENV SIACDN_DOMAIN www.siacdn.com
