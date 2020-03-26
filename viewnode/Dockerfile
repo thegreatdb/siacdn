@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 # For cache invalidation
-ENV SIACDN_BUILD_VERSION 5
+ENV SIACDN_BUILD_VERSION 6
 
 RUN apt-get update && apt-get upgrade -y && apt-get -y install ca-certificates curl
 
