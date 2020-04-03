@@ -60,19 +60,6 @@ spec:
           limits:
             memory: "8Gi"
             cpu: "1000m"
-      - name: portal
-        image: ericflo/siacdn-portal:latest
-        imagePullPolicy: Always
-        command: ["http-server", "-p", "3000", "public"]
-        ports:
-        - containerPort: 3000
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "125m"
-          limits:
-            memory: "500Mi"
-            cpu: "250m"
       - name: nginx
         image: ericflo/siacdn-nginx:latest
         imagePullPolicy: Always
