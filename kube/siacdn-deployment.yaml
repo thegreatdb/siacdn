@@ -40,7 +40,7 @@ spec:
             cpu: "250m"
           limits:
             memory: "8Gi"
-            cpu: "1000m"
+            cpu: "6500m"
       - name: sia-upload
         image: ericflo/siacdn-viewnode:latest
         imagePullPolicy: Always
