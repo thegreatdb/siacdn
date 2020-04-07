@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app: siacdn-viewer
   serviceName: "siacdn-viewer"
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
