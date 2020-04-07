@@ -37,6 +37,8 @@ spec:
         volumeMounts:
         - name: sia-viewer
           mountPath: /etc/sia
+        # - name: sia-viewer-host
+        #   mountPath: /etc/sia/host
         envFrom:
         - secretRef:
             name: siacdn-viewer
@@ -71,7 +73,14 @@ spec:
       name: sia-viewer
     spec:
       accessModes: [ "ReadWriteOnce" ]
-#      storageClassName: "microk8s-hostpath"
       resources:
         requests:
           storage: 50Gi
+  # - metadata:
+  #     name: sia-viewer-host
+  #   spec:
+  #     accessModes: [ "ReadWriteOnce" ]
+  #     storageClassName: "microk8s-hostpath"
+  #     resources:
+  #       requests:
+  #         storage: 1Gi

@@ -22,12 +22,12 @@ if [ ! -f consensus/consensus.db ]; then
     echo "Finished bootstrapping consensus.db"
 fi
 
-#if [ ! -f host/host.db ]; then
-#    echo "Found no host.db, downloading now..."
-#    curl https://siastats.info/bootstrap/hostdb.zip -o /tmp/hostdb.zip
-#    echo "Finished downloading host.db, extracting now..."
-#    unzip /tmp/hostdb.zip -d /etc/sia
-#    echo "Finished bootstrapping host.db"
-#fi
+if [ ! -f host/host.db ]; then
+    echo "Found no host.db, downloading now..."
+    curl https://siastats.info/bootstrap/hostdb.zip -o /tmp/hostdb.zip
+    echo "Finished downloading host.db, extracting now..."
+    unzip /tmp/hostdb.zip -d /etc/sia
+    echo "Finished bootstrapping host.db"
+fi
 
 /go/bin/siad -d /etc/sia "$@"
