@@ -13,7 +13,7 @@ if [ ! -f consensus/consensus.db ]; then
     echo "Found no consensus.db, downloading now..."
     curl https://siastats.info/bootstrap/bootstrap.zip -o /tmp/bootstrap.zip
     echo "Finished downloading consensus.db, extracting now..."
-    unzip /tmp/bootstrap.zip -o -d /etc/sia
+    unzip /tmp/bootstrap.zip -d /etc/sia
     echo "Finished bootstrapping consensus.db"
 fi
 
@@ -21,7 +21,7 @@ if [ ! -f host/host.db ]; then
     echo "Found no host.db, downloading now..."
     curl https://siastats.info/bootstrap/hostdb.zip -o /tmp/hostdb.zip
     echo "Finished downloading host.db, extracting now..."
-    unzip /tmp/hostdb.zip -o -d /etc/sia
+    unzip /tmp/hostdb.zip -d /etc/sia
     echo "Finished bootstrapping host.db"
 fi
 
