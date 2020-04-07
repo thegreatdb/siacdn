@@ -2,14 +2,9 @@
 
 set -e
 
-# Wait for apipassword
-while [ ! -f /etc/sia/apipassword ]; do
-    echo "Waiting for API Password"
-    sleep 1
-done
-
-APIPASSWORD=`cat /etc/sia/apipassword`
-BASE64_AUTHENTICATION=`echo -n ":$APIPASSWORD" | base64 -`
+API_PASSWORD_ENVNAME="SIA_API_PASSWORD_$ORDINAL_ID"
+export SIA_API_PASSWORD=`printf '%s' "${!API_PASSWORD_ENVNAME}"`
+BASE64_AUTHENTICATION=`echo -n ":$SIA_API_PASSWORD" | base64 -`
 cat /etc/skynet/uploader.conf | \
     sed -- 's#'"BASE64_AUTHENTICATION"'#'"$BASE64_AUTHENTICATION"'#g' - | \
     sed -- 's#'"SKYNET_HOSTNAME"'#'"$SKYNET_HOSTNAME"'#g' - | \
