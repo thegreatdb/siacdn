@@ -58,7 +58,7 @@ spec:
           mountPath: /etc/sia
         envFrom:
         - configMapRef:
-          name: siacdn-config
+            name: siacdn-config
         resources:
           requests:
             memory: "256Mi"
@@ -68,7 +68,7 @@ spec:
             cpu: "500m"
   volumeClaimTemplates:
   - metadata:
-    name: sia-viewer
+      name: sia-viewer
     spec:
       accessModes: [ "ReadWriteOnce" ]
 #      storageClassName: "microk8s-hostpath"

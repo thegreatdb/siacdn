@@ -2,6 +2,12 @@
 
 set -e
 
+# Wait for apipassword
+while [ ! -f /etc/sia/apipassword ]; do
+    echo "Waiting for API Password"
+    sleep 1
+done
+
 APIPASSWORD=`cat /etc/sia/apipassword`
 BASE64_AUTHENTICATION=`echo -n ":$APIPASSWORD" | base64 -`
 cat /etc/skynet/portal.conf | \
