@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: siacdn-config
+data:
+  SKYNET_HOSTNAME: www.siacdn.com
+  SKYNET_HOSTNAME_ALT: siacdn.com

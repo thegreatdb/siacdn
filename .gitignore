@@ -2,3 +2,5 @@
 database.json
 kube/siacdn-sia-secret.yaml
 kube/siacdn-sia-upload-secret.yaml
+kube2/secrets.yaml
+kube/secrets.yaml

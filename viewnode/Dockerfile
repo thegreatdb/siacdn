@@ -6,7 +6,8 @@ FROM ubuntu:20.04
 
 ENV SIACDN_BASE_BUILD_VERSION 1
 
-RUN apt-get update && apt-get upgrade -y && apt-get -y install ca-certificates curl git build-essential
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get -y install ca-certificates curl git build-essential
 
 ENV GOLANG_GOOS linux
 ENV GOLANG_GOARCH amd64
@@ -28,7 +29,8 @@ RUN git clone https://gitlab.com/NebulousLabs/Sia.git && \
 
 FROM ubuntu:20.04
 
-RUN apt-get update && apt-get -y install ca-certificates
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get -y install ca-certificates curl unzip
 
 ENV GOLANG_GOOS linux
 ENV GOLANG_GOARCH amd64
@@ -37,4 +39,7 @@ ENV GOPATH $HOME/go
 ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 
 COPY --from=0 /go/bin/ /go/bin/
+COPY siad-wrapper.sh /go/bin/
+
+# TODO: Remove this
 WORKDIR /root/.sia
