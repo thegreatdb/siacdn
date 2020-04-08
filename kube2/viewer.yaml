@@ -44,6 +44,12 @@ spec:
         envFrom:
         - secretRef:
             name: siacdn-viewer
+        readinessProbe:
+          exec:
+            command:
+            - /go/bin/readiness.sh
+          initialDelaySeconds: 5
+          periodSeconds: 5
         resources:
           requests:
             memory: "2Gi"

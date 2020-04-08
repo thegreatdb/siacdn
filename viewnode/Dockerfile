@@ -40,7 +40,7 @@ ENV GOPATH $HOME/go
 ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 
 COPY --from=0 /go/bin/ /go/bin/
-COPY siad-wrapper.sh /go/bin/
+COPY *.sh /go/bin/
 
 # TODO: Remove this
 WORKDIR /root/.sia
