@@ -21,6 +21,7 @@ RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.$GOLANG_GOOS-$GOLANG_GOARC
   | tar -v -C /usr/local -xz
 RUN git clone https://gitlab.com/NebulousLabs/Sia.git && \
     cd Sia && \
+    git checkout tags/v1.4.7 && \
     make
 
 ################################################

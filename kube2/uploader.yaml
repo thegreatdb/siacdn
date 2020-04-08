@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app: siacdn-uploader
   serviceName: "siacdn-uploader"
-  replicas: 5
+  replicas: 1
   template:
     metadata:
       labels:
@@ -37,8 +37,6 @@ spec:
         volumeMounts:
         - name: sia-uploader
           mountPath: /etc/sia
-        # - name: sia-uploader-host
-        #   mountPath: /etc/sia/host
         envFrom:
         - secretRef:
             name: siacdn-uploader
@@ -76,11 +74,3 @@ spec:
       resources:
         requests:
           storage: 50Gi
-  # - metadata:
-  #     name: sia-uploader-host
-  #   spec:
-  #     accessModes: [ "ReadWriteOnce" ]
-  #     storageClassName: "microk8s-hostpath"
-  #     resources:
-  #       requests:
-  #         storage: 1Gi
