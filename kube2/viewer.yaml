@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app: siacdn-viewer
   serviceName: "siacdn-viewer"
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -37,6 +37,10 @@ spec:
         volumeMounts:
         - name: sia-viewer
           mountPath: /etc/sia
+        - name: sia-viewer-renter
+          mountPath: /etc/sia/renter
+        - name: sia-viewer-wallet
+          mountPath: /etc/sia/wallet
         envFrom:
         - secretRef:
             name: siacdn-viewer
@@ -70,7 +74,24 @@ spec:
   - metadata:
       name: sia-viewer
     spec:
+      storageClassName: "microk8s-hostpath"
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
           storage: 50Gi
+  - metadata:
+      name: sia-viewer-renter
+    spec:
+      storageClassName: "rook-ceph-block"
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 50Gi
+  - metadata:
+      name: sia-viewer-wallet
+    spec:
+      storageClassName: "rook-ceph-block"
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi

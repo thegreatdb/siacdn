@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app: siacdn-uploader
   serviceName: "siacdn-uploader"
-  replicas: 1
+  replicas: 5
   template:
     metadata:
       labels:
@@ -37,6 +37,10 @@ spec:
         volumeMounts:
         - name: sia-uploader
           mountPath: /etc/sia
+        - name: sia-uploader-renter
+          mountPath: /etc/sia/renter
+        - name: sia-uploader-wallet
+          mountPath: /etc/sia/wallet
         envFrom:
         - secretRef:
             name: siacdn-uploader
@@ -70,7 +74,24 @@ spec:
   - metadata:
       name: sia-uploader
     spec:
+      storageClassName: "microk8s-hostpath"
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
           storage: 50Gi
+  - metadata:
+      name: sia-uploader-renter
+    spec:
+      storageClassName: "rook-ceph-block"
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 50Gi
+  - metadata:
+      name: sia-uploader-wallet
+    spec:
+      storageClassName: "rook-ceph-block"
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
