@@ -66,6 +66,8 @@ spec:
         - name: sia-viewer
           mountPath: /etc/sia
         envFrom:
+        - secretRef:
+            name: siacdn-uploader
         - configMapRef:
             name: siacdn-config
         resources:

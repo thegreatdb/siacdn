@@ -15,7 +15,7 @@ spec:
       hosts:
         - new.siacdn.com
   backend:
-    serviceName: siacdn-service
+    serviceName: siacdn-portal
     servicePort: 8080
   rules:
   - host: new.siacdn.com

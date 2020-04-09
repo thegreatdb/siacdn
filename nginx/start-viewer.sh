@@ -2,7 +2,9 @@
 
 set -e
 
+ORDINAL_ID=`echo -n $HOSTNAME | rev | cut -d "-" -f1 | rev`
 API_PASSWORD_ENVNAME="SIA_API_PASSWORD_$ORDINAL_ID"
+echo "API_PASSWORD_ENVNAME: $API_PASSWORD_ENVNAME"
 export SIA_API_PASSWORD=`printf '%s' "${!API_PASSWORD_ENVNAME}"`
 BASE64_AUTHENTICATION=`echo -n ":$SIA_API_PASSWORD" | base64 -`
 cat /etc/skynet/viewer.conf | \
