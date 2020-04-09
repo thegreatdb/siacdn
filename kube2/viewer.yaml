@@ -46,8 +46,10 @@ spec:
           exec:
             command:
             - /go/bin/readiness.sh
-          initialDelaySeconds: 5
-          periodSeconds: 5
+            - wallet
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
         resources:
           requests:
             memory: "2Gi"
