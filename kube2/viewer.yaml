@@ -37,10 +37,8 @@ spec:
         volumeMounts:
         - name: sia-viewer
           mountPath: /etc/sia
-        - name: sia-viewer-renter
-          mountPath: /etc/sia/renter
-        - name: sia-viewer-wallet
-          mountPath: /etc/sia/wallet
+        - name: sia-viewer-renter-fs
+          mountPath: /etc/sia/renter/fs
         envFrom:
         - secretRef:
             name: siacdn-viewer
@@ -86,18 +84,10 @@ spec:
         requests:
           storage: 50Gi
   - metadata:
-      name: sia-viewer-renter
+      name: sia-viewer-renter-fs
     spec:
       storageClassName: "rook-ceph-block"
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
           storage: 50Gi
-  - metadata:
-      name: sia-viewer-wallet
-    spec:
-      storageClassName: "rook-ceph-block"
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 2Gi

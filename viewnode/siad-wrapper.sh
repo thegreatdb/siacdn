@@ -4,7 +4,7 @@ set -e
 
 cd /etc/sia
 
-/go/bin/setup-env.sh
+source /go/bin/setup-env.sh
 
 #echo "Bootstrapping wallet with password: $SIA_WALLET_PASSWORD"
 

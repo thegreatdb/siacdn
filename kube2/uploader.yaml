@@ -37,10 +37,8 @@ spec:
         volumeMounts:
         - name: sia-uploader
           mountPath: /etc/sia
-        - name: sia-uploader-renter
-          mountPath: /etc/sia/renter
-        - name: sia-uploader-wallet
-          mountPath: /etc/sia/wallet
+        - name: sia-uploader-renter-fs
+          mountPath: /etc/sia/renter/fs
         envFrom:
         - secretRef:
             name: siacdn-uploader
@@ -86,18 +84,10 @@ spec:
         requests:
           storage: 50Gi
   - metadata:
-      name: sia-uploader-renter
+      name: sia-uploader-renter-fs
     spec:
       storageClassName: "rook-ceph-block"
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
           storage: 50Gi
-  - metadata:
-      name: sia-uploader-wallet
-    spec:
-      storageClassName: "rook-ceph-block"
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 2Gi
