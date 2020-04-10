@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: siacdn-statscollector
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: siacdn-statscollector
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siacdn-statscollector
+spec:
+  selector:
+    matchLabels:
+      app: siacdn-statscollector
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: siacdn-statscollector
+    spec:
+      containers:
+      - name: statscollector
+        image: ericflo/siacdn-statscollector:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: siacdn-config
+        livenessProbe:
+          exec:
+            command:
+            - curl
+            - http://localhost:8080/stats
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
