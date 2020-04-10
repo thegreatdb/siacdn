@@ -33,7 +33,6 @@ type Stats struct {
 var collectedStats map[string]Stats = make(map[string]Stats, 0)
 
 func serveAggregatedStats(w http.ResponseWriter, r *http.Request) {
-
 	var versionInfo *StatsVersions = nil
 	var aggregatedTotals StatsTotals
 	uploaders := make(map[string]Stats, 0)

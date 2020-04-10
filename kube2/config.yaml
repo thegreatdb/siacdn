@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: siacdn-config
 data:
-  SKYNET_HOSTNAME: new.siacdn.com
+  SKYNET_HOSTNAME: www.siacdn.com
   SKYNET_HOSTNAME_ALT: siacdn.com

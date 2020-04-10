@@ -1,24 +1,25 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: siacdn-ingress-new
+  name: siacdn-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    #nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: 1024m
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 spec:
   tls:
-    - secretName: siacdn-ingress-new-cert
+    - secretName: siacdn-ingress-cert
       hosts:
-        - new.siacdn.com
+        - www.siacdn.com
+        - siacdn.com
   backend:
     serviceName: siacdn-portal
     servicePort: 8080
   rules:
-  - host: new.siacdn.com
+  - host: www.siacdn.com
     http:
       paths:
       - path: /
