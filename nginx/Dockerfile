@@ -32,6 +32,7 @@ RUN git clone https://github.com/NebulousLabs/skynet-webportal.git && \
 
 FROM nginx:1.17
 
+RUN apt-get update && apt-get -y install curl
 COPY --from=0 /skynet-webportal/public /skynet-webportal/public
 COPY . /etc/skynet/
 RUN chmod +x /etc/skynet/*.sh

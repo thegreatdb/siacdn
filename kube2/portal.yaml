@@ -36,6 +36,14 @@ spec:
         envFrom:
         - configMapRef:
             name: siacdn-config
+        livenessProbe:
+          exec:
+            command:
+            - curl
+            - http://localhost:8080/AAD9yxe6ymGIj9rh0PSENyHzv9AxF7UYYiCyKai_dmV6LA
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
         resources:
           requests:
             memory: "256Mi"
