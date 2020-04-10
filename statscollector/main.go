@@ -33,11 +33,12 @@ type Stats struct {
 var collectedStats map[string]Stats = make(map[string]Stats, 0)
 
 func serveAggregatedStats(w http.ResponseWriter, r *http.Request) {
-	resp := map[string]interface{}{}
+
 	var versionInfo *StatsVersions = nil
 	var aggregatedTotals StatsTotals
+	uploaders := make(map[string]Stats, 0)
 	for name, stats := range collectedStats {
-		resp[name] = stats
+		uploaders[name] = stats
 		if versionInfo == nil {
 			versionInfo = &stats.VersionInfo
 		}
@@ -49,8 +50,11 @@ func serveAggregatedStats(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
-	resp["uploadstats"] = aggregatedTotals
-	resp["versioninfo"] = versionInfo
+	resp := map[string]interface{}{
+		"uploaders":   uploaders,
+		"uploadstats": aggregatedTotals,
+		"versioninfo": versionInfo,
+	}
 	encoded, err := json.MarshalIndent(resp, "", "  ")
 	if err != nil {
 		msg := fmt.Sprintf("Could not encode JSON: %w", err)
@@ -98,7 +102,7 @@ func collectStatsRun() error {
 			return err
 		}
 		dec := json.NewDecoder(resp.Body)
-		dec.DisallowUnknownFields()
+		//dec.DisallowUnknownFields()
 		var stats Stats
 		if err = dec.Decode(&stats); err != nil {
 			return err
