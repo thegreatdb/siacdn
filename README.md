@@ -2,7 +2,7 @@
 
 SiaCDN is a high-quality hosted Skynet node.
 
-This repository is the complete set of scripts that is used to run this high-quality hosted Skynet node.
+This repository is the complete set of scripts that is used to run this high-quality hosted Skynet node in your kubernetes cluster.
 
 ## How can I use this repository?
 
@@ -23,15 +23,13 @@ This repository can be used to easily deploy a Skynet node of your own on Kubern
 
 ## Customization and configuration changes before we can begin
 
-1. Copy `kube/siacdn-sia-upload-secret.yaml.template` to `kube/siacdn-sia-upload-secret.yaml` and fill in SIA_WALLET_PASSWORD with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0`
-2. Copy `kube/siacdn-sia-secret.yaml.template` to `kube/siacdn-sia-secret.yaml` and fill in SIA_WALLET_PASSWORD with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0`
-3. Change `ericflo/siacdn-nginx:latest` to `YOUR_DOCKERHUB_NAME/siacdn-nginx:latest` in bin/*, repeat for `siacdn-portal` and `siacdn-viewnode`.
-4. Do the same change for the Docker image name values in `kube/siacdn-deployment.yaml`.
-5. Create `siacdn-nginx`, `siacdn-portal`, and `siacdn-viewnode` projects on your Docker Hub account.
-6. Edit the `server_name` field in `nginx/nginx.conf` to match your domain name.
-7. Change `SIACDN_DOMAIN` in `portal/Dockerfile` to match your domain.
-8. Run `bin/docker-build-nginx`, `bin/docker-build-portal`, and `bin/docker-build-viewnode`, which will build and upload the docker images to your account.
-9. Commit and push all these changes to your fork of this repo.
+1. Make a copy of `kube/secrets.yaml.template` and save it as `kube/secrets.yaml`, then fill the values of `SIA_WALLET_PASSWORD_N` with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0` for as many viewers and uploaders as you want.
+2. Choose API passwords for each of your nodes (e.g. random UUID) and fill in `SIA_API_PASSWORD_N` with those values. Use `echo -n "YOUR API PASSWORD HERE" | base64 -w0` to base64 encode it for the yaml file.
+3. Edit `SKYNET_HOSTNAME` and `SKYNET_HOSTNAME_ALT` in `kube/config.yaml` to set it to your domain instead of the defaults.
+4. Edit the number of replicas in `kube/uploader.yaml` and `kube/viewer.yaml` to match the number of secrets you filled in for step 2.
+5. Edit the domains in `kube/ingress.yaml` to point to your domain instead of the defaults.
+6. Change the `storageClassName` in both `kube/uploader.yaml` and `kube/viewer.yaml` to match the storage class in your kubernetes cluster. It may be that you want to simply delete the `storageClassName` lines, so that your default storage class will provision the volume claims.
+7. Commit and push all these changes to your fork of this repo.
 
 
 ## Installing SiaCDN
@@ -47,32 +45,31 @@ kubectl create -f kube/
 
 ## Configuring your Sia node
 
-1. Run siac wallet init and wait for consensus, checking using plain siac command.
+1. Run siac wallet init and wait for consensus for the uploaders, checking using siac.sh:
 
 ```
-kubectl exec -it deployment/siacdn-deployment -c sia -- siac wallet init
-kubectl exec -it deployment/siacdn-deployment -c sia -- siac
+kubectl exec -it siacdn-uploader-0 -c sia -- siac.sh wallet init
+kubectl exec -it siacdn-uploader-0 -c sia -- siac.sh
 ```
 
-2. Run siac wallet address to get an address, and send that address some siacoins, probably 25K or so.
+Do the same for the viewers:
 
 ```
-kubectl exec -it deployment/siacdn-deployment -c sia -- siac wallet address
+kubectl exec -it siacdn-viewer-0 -c sia -- siac.sh wallet init
+kubectl exec -it siacdn-viewer-0 -c sia -- siac.sh
 ```
 
-3. Run siac renter setallowance twice, with parameters detailed by Nebulous at the following link, but use your judgement and adjust limits to your setup:
+2. Run siac wallet address to get an address for each node, and send that address some siacoins, probably 25K or so.
+
+```
+kubectl exec -it siacdn-uploader-0 -c sia -- siac.sh wallet address
+```
+
+3. Run siac renter setallowance twice per viewer and uploader, with parameters detailed by Nebulous at the following link, but use your judgement and adjust limits to your setup:
 
 [https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#portal-setup](https://github.com/NebulousLabs/skynet-webportal/tree/master/setup-scripts#portal-setup)
 
 ```
-kubectl exec -it deployment/siacdn-deployment -c sia -- siac renter setallowance
-kubectl exec -it deployment/siacdn-deployment -c sia -- siac renter setallowance --payment-contract-initial-funding 10SC
-```
-
-4. Repeat steps 1 to 3, but instead of `-c sia`, use `-c sia-upload`, and instead of `siac` use `siac -addr localhost:9970`. Here's an example:
-
-```
-kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac --addr localhost:9970 wallet init
-kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac --addr localhost:9970 wallet address
-kubectl exec -it deployment/siacdn-deployment -c sia-upload -- siac --addr localhost:9970 renter setallowance --payment-contract-initial-funding 10SC
+kubectl exec -it siacdn-uploader-0 -c sia -- siac.sh renter setallowance
+kubectl exec -it siacdn-uploader-0 -c sia -- siac.sh renter setallowance --payment-contract-initial-funding 10SC
 ```
