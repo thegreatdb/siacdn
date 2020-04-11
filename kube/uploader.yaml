@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app: siacdn-uploader
   serviceName: "siacdn-uploader"
-  replicas: 5
+  replicas: 6
   template:
     metadata:
       labels:
