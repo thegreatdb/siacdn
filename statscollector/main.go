@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,12 +31,14 @@ type Stats struct {
 	VersionInfo StatsVersions `json:"versioninfo"`
 }
 
+var statsMux sync.RWMutex
 var collectedStats map[string]Stats = make(map[string]Stats, 0)
 
 func serveAggregatedStats(w http.ResponseWriter, r *http.Request) {
 	var versionInfo *StatsVersions = nil
 	var aggregatedTotals StatsTotals
 	uploaders := make(map[string]Stats, 0)
+	statsMux.RLock()
 	for name, stats := range collectedStats {
 		uploaders[name] = stats
 		if versionInfo == nil {
@@ -44,6 +47,7 @@ func serveAggregatedStats(w http.ResponseWriter, r *http.Request) {
 		aggregatedTotals.NumFiles += stats.UploadStats.NumFiles
 		aggregatedTotals.TotalSize += stats.UploadStats.TotalSize
 	}
+	statsMux.RUnlock()
 	if versionInfo == nil {
 		msg := fmt.Sprintf("Requested stats before it was collected")
 		http.Error(w, msg, http.StatusBadRequest)
@@ -73,43 +77,67 @@ func collectStats() {
 		} else {
 			time.Sleep(30 * time.Second)
 		}
-		if err := collectStatsRun(); err != nil {
-			log.Println("Got error collecting stats", err)
-		}
+		collectAll()
 	}
 }
 
-func collectStatsRun() error {
+func collectAll() {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return err
+		log.Println("Could not configue kubernetes client")
+		return
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return err
+		log.Println("Could not set up kubernetes client from configuration")
+		return
 	}
 	pods, err := clientset.CoreV1().Pods("default").List(metav1.ListOptions{
 		LabelSelector: "app=siacdn-uploader",
 	})
 	if err != nil {
-		return err
+		log.Println("Could not list pods from kubernetes")
+		return
 	}
+	var wg sync.WaitGroup
 	for _, pod := range pods.Items {
-		log.Println("About to collect from", pod.Name)
-		resp, err := http.Get(fmt.Sprintf("http://%s:8080/stats", pod.Status.PodIP))
-		if err != nil {
-			return err
-		}
-		dec := json.NewDecoder(resp.Body)
-		//dec.DisallowUnknownFields()
-		var stats Stats
-		if err = dec.Decode(&stats); err != nil {
-			return err
-		}
-		collectedStats[pod.Name] = stats
-		log.Println("Got", stats.UploadStats.NumFiles, "files on", pod.Name)
+		wg.Add(1)
+		go func(name, ip string) {
+			defer wg.Done()
+			collectOne(name, ip)
+		}(pod.Name, pod.Status.PodIP)
 	}
-	return nil
+	wg.Wait()
+	return
+}
+
+func collectOne(name, ip string) {
+	log.Println("About to collect from", name)
+	var netClient = &http.Client{
+		Timeout: time.Second * 600,
+	}
+	resp, err := netClient.Get(fmt.Sprintf("http://%s:8080/stats", ip))
+	if err != nil {
+		log.Println("Could not collect stats from", name, err)
+		statsMux.Lock()
+		delete(collectedStats, name)
+		statsMux.Unlock()
+		return
+	}
+	dec := json.NewDecoder(resp.Body)
+	//dec.DisallowUnknownFields()
+	var stats Stats
+	if err = dec.Decode(&stats); err != nil {
+		log.Println("Could not decode stats from", name, err)
+		statsMux.Lock()
+		delete(collectedStats, name)
+		statsMux.Unlock()
+		return
+	}
+	statsMux.Lock()
+	collectedStats[name] = stats
+	statsMux.Unlock()
+	log.Println("Got", stats.UploadStats.NumFiles, "files on", name)
 }
 
 func main() {
