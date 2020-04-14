@@ -114,14 +114,14 @@ func collectAll() {
 func collectOne(name, ip string) {
 	log.Println("About to collect from", name)
 	var netClient = &http.Client{
-		Timeout: time.Second * 600,
+		Timeout: time.Second * 30,
 	}
 	resp, err := netClient.Get(fmt.Sprintf("http://%s:8080/stats", ip))
 	if err != nil {
 		log.Println("Could not collect stats from", name, err)
-		statsMux.Lock()
-		delete(collectedStats, name)
-		statsMux.Unlock()
+		//statsMux.Lock()
+		//delete(collectedStats, name)
+		//statsMux.Unlock()
 		return
 	}
 	dec := json.NewDecoder(resp.Body)
@@ -129,9 +129,9 @@ func collectOne(name, ip string) {
 	var stats Stats
 	if err = dec.Decode(&stats); err != nil {
 		log.Println("Could not decode stats from", name, err)
-		statsMux.Lock()
-		delete(collectedStats, name)
-		statsMux.Unlock()
+		//statsMux.Lock()
+		//delete(collectedStats, name)
+		//statsMux.Unlock()
 		return
 	}
 	statsMux.Lock()
