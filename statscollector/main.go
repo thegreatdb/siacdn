@@ -114,7 +114,7 @@ func collectAll() {
 func collectOne(name, ip string) {
 	log.Println("About to collect from", name)
 	var netClient = &http.Client{
-		Timeout: time.Second * 30,
+		Timeout: time.Second * 600,
 	}
 	resp, err := netClient.Get(fmt.Sprintf("http://%s:8080/stats", ip))
 	if err != nil {
