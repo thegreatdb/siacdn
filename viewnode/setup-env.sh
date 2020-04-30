@@ -5,6 +5,7 @@ set -e
 cd /etc/sia
 
 export SIA_DATA_DIR=/etc/sia
+export SIAD_DATA_DIR="$SIA_DATA_DIR"
 
 ORDINAL_ID=`echo -n $HOSTNAME | rev | cut -d "-" -f1 | rev`
 WALLET_PASSWORD_ENVNAME="SIA_WALLET_PASSWORD_$ORDINAL_ID"

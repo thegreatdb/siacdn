@@ -6,6 +6,7 @@ cd /etc/sia
 
 source /go/bin/setup-env.sh
 
+echo "Starting up with SIAD_DATA_DIR as $SIAD_DATA_DIR"
 #echo "Bootstrapping wallet with password: $SIA_WALLET_PASSWORD"
 
 if [ ! -f consensus/consensus.db ]; then
