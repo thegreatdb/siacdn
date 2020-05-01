@@ -15,10 +15,11 @@ ENV GOLANG_VERSION 1.14.2
 ENV GOPATH $HOME/go
 ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 
-ENV SIACDN_SIA_BUILD_VERSION 2
-
 RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.$GOLANG_GOOS-$GOLANG_GOARCH.tar.gz \
   | tar -v -C /usr/local -xz
+
+ENV SIACDN_SIA_BUILD_VERSION 1
+
 RUN git clone https://gitlab.com/NebulousLabs/Sia.git && \
     cd Sia && \
     git fetch origin merge-requests/4415/head:speed-fixes && \
