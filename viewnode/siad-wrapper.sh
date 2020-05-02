@@ -25,4 +25,4 @@ echo "Starting up with SIAD_DATA_DIR as $SIAD_DATA_DIR"
 #    echo "Finished bootstrapping hostdb.json"
 #fi
 
-/go/bin/siad -d /etc/sia "$@"
+/go/bin/siad -d /etc/sia -M "cgtwr" "$@"

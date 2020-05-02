@@ -22,8 +22,6 @@ ENV SIACDN_SIA_BUILD_VERSION 1
 
 RUN git clone https://gitlab.com/NebulousLabs/Sia.git && \
     cd Sia && \
-    git fetch origin merge-requests/4415/head:speed-fixes && \
-    git checkout speed-fixes && \
     make
 
 ################################################
