@@ -29,6 +29,7 @@ type StatsVersions struct {
 type Stats struct {
 	UploadStats StatsTotals   `json:"uploadstats"`
 	VersionInfo StatsVersions `json:"versioninfo"`
+	Uploaders   interface{}   `json:"uploaders,omitempty"`
 }
 
 var statsMux sync.RWMutex
@@ -132,6 +133,10 @@ func collectOne(name, ip string) {
 		//statsMux.Lock()
 		//delete(collectedStats, name)
 		//statsMux.Unlock()
+		return
+	}
+	if stats.Uploaders != nil {
+		log.Println("Somehow got global stats for pod, bailing...")
 		return
 	}
 	statsMux.Lock()
