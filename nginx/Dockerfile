@@ -5,7 +5,7 @@ FROM nginx:1.17
 #############################################
 
 # For cache invalidation
-ENV SIACDN_BUILD_VERSION 6
+ENV SIACDN_BUILD_VERSION 7
 
 # Install base system
 ENV DEBIAN_FRONTEND noninteractive
