@@ -22,6 +22,7 @@ ENV SIACDN_SIA_BUILD_VERSION 4
 
 RUN git clone https://gitlab.com/ericflo/Sia.git && \
     cd Sia && \
+    git checkout c5a23b1552a5feea33c0b2fcde7758731b055fb1 && \
     make
 
 ################################################
