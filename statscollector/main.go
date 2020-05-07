@@ -27,9 +27,10 @@ type StatsVersions struct {
 
 // Stats represents overall stats about a single Sia node
 type Stats struct {
-	UploadStats StatsTotals   `json:"uploadstats"`
-	VersionInfo StatsVersions `json:"versioninfo"`
-	Uploaders   interface{}   `json:"uploaders,omitempty"`
+	UploadStats      StatsTotals   `json:"uploadstats"`
+	VersionInfo      StatsVersions `json:"versioninfo"`
+	PerformanceStats interface{}   `json:"performancestats,omitempty"`
+	Uploaders        interface{}   `json:"uploaders,omitempty"`
 }
 
 var statsMux sync.RWMutex
