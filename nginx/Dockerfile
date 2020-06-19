@@ -1,11 +1,11 @@
-FROM nginx:1.17
+FROM nginx:1.19
 
 #############################################
 # STAGE 0: Build the portal with nodejs etc #
 #############################################
 
 # For cache invalidation
-ENV SIACDN_BUILD_VERSION 7
+ENV SIACDN_BUILD_VERSION 9
 
 # Install base system
 ENV DEBIAN_FRONTEND noninteractive
@@ -30,9 +30,9 @@ RUN git clone https://github.com/NebulousLabs/skynet-webportal.git && \
 # STAGE 1: Build the nginx image with custom config and start script #
 ######################################################################
 
-FROM nginx:1.17
+FROM nginx:1.19
 
-RUN apt-get update && apt-get -y install curl
+RUN apt-get update && apt-get -y install ca-certificates curl
 COPY --from=0 /skynet-webportal/public /skynet-webportal/public
 COPY . /etc/skynet/
 RUN chmod +x /etc/skynet/*.sh

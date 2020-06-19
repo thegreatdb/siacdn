@@ -11,18 +11,19 @@ RUN apt-get update && apt-get -y install ca-certificates curl git build-essentia
 
 ENV GOLANG_GOOS linux
 ENV GOLANG_GOARCH amd64
-ENV GOLANG_VERSION 1.14.2
+ENV GOLANG_VERSION 1.14.4
 ENV GOPATH $HOME/go
 ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 
 RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.$GOLANG_GOOS-$GOLANG_GOARCH.tar.gz \
   | tar -v -C /usr/local -xz
 
-ENV SIACDN_SIA_BUILD_VERSION 4
+ENV SIACDN_SIA_BUILD_VERSION 7
 
-RUN git clone https://gitlab.com/ericflo/Sia.git && \
+RUN git clone https://gitlab.com/NebulousLabs/Sia.git && \
     cd Sia && \
-    git checkout c5a23b1552a5feea33c0b2fcde7758731b055fb1 && \
+#    git fetch --all --tags && \
+#    git checkout tags/v1.4.10 && \
     make
 
 ################################################
