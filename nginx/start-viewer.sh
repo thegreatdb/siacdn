@@ -2,7 +2,7 @@
 
 set -e
 
-ORDINAL_ID=`echo -n $HOSTNAME | rev | cut -d "-" -f1 | rev`
+ORDINAL_ID=`echo -n $HOSTNAME | cut -d "-" -f3`
 API_PASSWORD_ENVNAME="SIA_API_PASSWORD_$ORDINAL_ID"
 echo "API_PASSWORD_ENVNAME: $API_PASSWORD_ENVNAME"
 export SIA_API_PASSWORD=`printf '%s' "${!API_PASSWORD_ENVNAME}"`

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: siacdn-uploader
+spec:
+  clusterIP: None
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: siacdn-uploader

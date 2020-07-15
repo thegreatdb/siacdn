@@ -1,0 +1,83 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: siacdn-uploader-3
+spec:
+  storageClassName: "microk8s-hostpath"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siacdn-uploader-3
+spec:
+  selector:
+    matchLabels:
+      appinstance: siacdn-uploader-3
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: siacdn-uploader
+        appinstance: siacdn-uploader-3
+    spec:
+      nodeName: alpha-lax1
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: siacdn-uploader-3
+        persistentVolumeClaim:
+          claimName: siacdn-uploader-3
+      containers:
+      - name: sia
+        image: ericflo/siacdn-viewnode:latest
+        imagePullPolicy: Always
+        command: ["siad-wrapper.sh"]
+        ports:
+        - containerPort: 9980
+        volumeMounts:
+        - name: siacdn-uploader-3
+          mountPath: /etc/sia
+        envFrom:
+        - secretRef:
+            name: siacdn-uploader
+        readinessProbe:
+          exec:
+            command:
+            - /go/bin/readiness.sh
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "250m"
+          limits:
+            memory: "8Gi"
+            cpu: "6500m"
+      - name: nginx
+        image: ericflo/siacdn-nginx:latest
+        imagePullPolicy: Always
+        command: ["/etc/skynet/start-uploader.sh"]
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: siacdn-uploader-3
+          mountPath: /etc/sia
+        envFrom:
+        - secretRef:
+            name: siacdn-uploader
+        - configMapRef:
+            name: siacdn-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
