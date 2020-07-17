@@ -11,7 +11,7 @@ RUN apt-get update && apt-get -y install ca-certificates curl git build-essentia
 
 ENV GOLANG_GOOS linux
 ENV GOLANG_GOARCH amd64
-ENV GOLANG_VERSION 1.14.1
+ENV GOLANG_VERSION 1.14.5
 ENV GOPATH $HOME/go
 ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 
@@ -33,7 +33,7 @@ RUN apt-get update && apt-get -y install ca-certificates curl unzip
 
 ENV GOLANG_GOOS linux
 ENV GOLANG_GOARCH amd64
-ENV GOLANG_VERSION 1.14.1
+ENV GOLANG_VERSION 1.14.5
 ENV GOPATH $HOME/go
 ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 

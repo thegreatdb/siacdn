@@ -18,7 +18,7 @@ ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
 RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.$GOLANG_GOOS-$GOLANG_GOARCH.tar.gz \
   | tar -v -C /usr/local -xz
 
-ENV SIACDN_SIA_BUILD_VERSION 9
+ENV SIACDN_SIA_BUILD_VERSION 10
 
 RUN git clone https://gitlab.com/NebulousLabs/Sia.git && \
     cd Sia && \

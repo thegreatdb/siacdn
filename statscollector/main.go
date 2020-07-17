@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -129,14 +130,14 @@ func collectAll() {
 		go func(name, ip string) {
 			defer wg.Done()
 			collectOne(name, ip, "stats", collectedUploadStats)
-		}(pod.Name, pod.Status.PodIP)
+		}(sanitizePodName(pod.Name), pod.Status.PodIP)
 	}
 	for _, pod := range viewerPods.Items {
 		wg.Add(1)
 		go func(name, ip string) {
 			defer wg.Done()
 			collectOne(name, ip, "statsdown", collectedViewStats)
-		}(pod.Name, pod.Status.PodIP)
+		}(sanitizePodName(pod.Name), pod.Status.PodIP)
 	}
 	wg.Wait()
 	return
@@ -173,6 +174,14 @@ func collectOne(name, ip, pathPart string, statMap map[string]Stats) {
 	statMap[name] = stats
 	statsMux.Unlock()
 	log.Println("Got", stats.UploadStats.NumFiles, "files on", name)
+}
+
+func sanitizePodName(name string) string {
+	splitStr := strings.Split(name, "-")
+	if len(splitStr) >= 5 {
+		return strings.Join(splitStr[:len(splitStr)-2], "-")
+	}
+	return name
 }
 
 func main() {
