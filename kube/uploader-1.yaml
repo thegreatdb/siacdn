@@ -81,3 +81,18 @@ spec:
           limits:
             memory: "500Mi"
             cpu: "500m"
+      - name: rclone-backup
+        image: ericflo/rclone-backup:latest
+        imagePullPolicy: Always
+        command: ["rclone-backup", "--source", "/etc/sia"]
+        volumeMounts:
+        - name: siacdn-uploader-1
+          mountPath: /etc/sia
+        envFrom:
+        - secretRef:
+            name: siacdn-backup
+        env:
+        - name: BACKUP_TARGET
+          value: rclone-backups-maxint/siacdn/uploader/1
+        - name: RCLONE_MAX_SIZE
+          value: 1G
