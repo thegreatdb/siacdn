@@ -18,6 +18,8 @@ RUN mkdir /etc/skynet/
 
 ENV GATSBY_API_URL "https://www.siacdn.com"
 
+ENV SIACDN_BUILD_VERSION 10
+
 # Install and build portal and server
 RUN git clone https://github.com/NebulousLabs/skynet-webportal.git && \
     cd skynet-webportal && \
