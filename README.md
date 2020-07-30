@@ -23,6 +23,8 @@ This repository can be used to easily deploy a Skynet node of your own on Kubern
 
 ## Customization and configuration changes before we can begin
 
+### NOTE: This section is very out of date. New documentation TBA
+
 1. Make a copy of `kube/secrets.yaml.template` and save it as `kube/secrets.yaml`, then fill the values of `SIA_WALLET_PASSWORD_N` with the result of `echo -n "YOUR SEED PHRASE HERE" | base64 -w0` for as many viewers and uploaders as you want.
 2. Choose API passwords for each of your nodes (e.g. random UUID) and fill in `SIA_API_PASSWORD_N` with those values. Use `echo -n "YOUR API PASSWORD HERE" | base64 -w0` to base64 encode it for the yaml file.
 3. Edit `SKYNET_HOSTNAME` and `SKYNET_HOSTNAME_ALT` in `kube/config.yaml` to set it to your domain instead of the defaults.
