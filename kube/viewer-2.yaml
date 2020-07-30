@@ -29,6 +29,10 @@ spec:
     spec:
       nodeName: alpha-mia1
       terminationGracePeriodSeconds: 10
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 10.152.183.250
       volumes:
       - name: siacdn-viewer-2
         persistentVolumeClaim:

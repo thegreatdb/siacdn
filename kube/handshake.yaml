@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: handshake
+spec:
+  selector:
+    matchLabels:
+      app: handshake
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: handshake
+    spec:
+      nodeName: alpha-nyc1
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: handshake-vol
+        persistentVolumeClaim:
+          claimName: handshake
+      containers:
+      - name: handshake
+        image: ericflo/siacdn-handshake:latest
+        imagePullPolicy: Always
+        command: ["/etc/handshake/hsd/bin/node", "--prefix", "/var/lib/handshake"]
+        ports:
+        - containerPort: 5350
+        volumeMounts:
+        - name: handshake-vol
+          mountPath: /var/lib/handshake
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "500Mi"
+            cpu: "500m"

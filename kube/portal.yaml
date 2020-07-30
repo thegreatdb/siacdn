@@ -26,6 +26,10 @@ spec:
       labels:
         app: siacdn-portal
     spec:
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 10.152.183.250
       containers:
       - name: nginx
         image: ericflo/siacdn-nginx:latest
