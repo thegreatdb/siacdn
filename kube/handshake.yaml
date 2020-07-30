@@ -24,16 +24,19 @@ spec:
       - name: handshake
         image: ericflo/siacdn-handshake:latest
         imagePullPolicy: Always
-        command: ["/etc/handshake/hsd/bin/node", "--prefix", "/var/lib/handshake"]
+        command: ["/etc/handshake/hsd/bin/node", "--prefix", "/var/lib/handshake", "--rs-host", "0.0.0.0", "--rs-port", "53"]
         ports:
-        - containerPort: 5350
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 53
+          protocol: UDP
         volumeMounts:
         - name: handshake-vol
           mountPath: /var/lib/handshake
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "125m"
+            cpu: 512m
+            memory: 512Mi
           limits:
-            memory: "500Mi"
-            cpu: "500m"
+            cpu: 1024m
+            memory: 1024Mi

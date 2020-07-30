@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: siacdn-viewer
 spec:
-  clusterIP: None
+  type: NodePort
+  clusterIP: 10.152.183.252
   ports:
     - protocol: TCP
       port: 8080

@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: siacdn-uploader
 spec:
-  clusterIP: None
+  type: NodePort
+  clusterIP: 10.152.183.251
   ports:
     - protocol: TCP
       port: 8080
