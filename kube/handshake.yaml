@@ -24,12 +24,17 @@ spec:
       - name: handshake
         image: ericflo/siacdn-handshake:latest
         imagePullPolicy: Always
-        command: ["/etc/handshake/hsd/bin/node", "--prefix", "/var/lib/handshake", "--rs-host", "0.0.0.0", "--rs-port", "53"]
+        command: ["/etc/handshake/start.sh"]
         ports:
         - containerPort: 53
           protocol: TCP
         - containerPort: 53
           protocol: UDP
+        - containerPort: 12037
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: siacdn-handshake
         volumeMounts:
         - name: handshake-vol
           mountPath: /var/lib/handshake

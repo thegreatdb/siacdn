@@ -9,6 +9,8 @@ metadata:
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: 1024m
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "256k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   tls:
@@ -17,7 +19,7 @@ spec:
         - www.siacdn.com
         - siacdn.com
   backend:
-    serviceName: siacdn-portal
+    serviceName: siacdn-viewer
     servicePort: 8080
   rules:
   - host: www.siacdn.com
@@ -25,7 +27,7 @@ spec:
       paths:
       - path: /
         backend:
-          serviceName: siacdn-portal
+          serviceName: siacdn-viewer
           servicePort: 8080
       - path: /stats
         backend:
@@ -44,6 +46,14 @@ spec:
           serviceName: siacdn-viewer
           servicePort: 8080
       - path: /file/[a-zA-Z0-9_-]{46}(/.*)?$
+        backend:
+          serviceName: siacdn-viewer
+          servicePort: 8080
+      - path: /hns
+        backend:
+          serviceName: siacdn-viewer
+          servicePort: 8080
+      - path: /hnsres
         backend:
           serviceName: siacdn-viewer
           servicePort: 8080

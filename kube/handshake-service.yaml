@@ -14,5 +14,9 @@ spec:
       protocol: UDP
       port: 53
       targetPort: 53
+    - name: api
+      protocol: TCP
+      port: 12037
+      targetPort: 12037
   selector:
     app: handshake
