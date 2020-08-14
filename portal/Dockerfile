@@ -13,7 +13,7 @@ RUN apt-get update && apt-get -y install ca-certificates curl git build-essentia
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     apt-get update && apt-get install -y yarn
 
-ENV SIACDN_CORE_BUILD_VERSION 1
+ENV SIACDN_CORE_BUILD_VERSION 2
 
 ENV GATSBY_API_URL "https://www.siacdn.com"
 

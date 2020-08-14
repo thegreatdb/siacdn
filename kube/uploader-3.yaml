@@ -50,7 +50,7 @@ spec:
             memory: "2Gi"
             cpu: "250m"
           limits:
-            memory: "8Gi"
+            memory: "10Gi"
             cpu: "6500m"
       - name: nginx
         image: ericflo/siacdn-portal:latest
